@@ -6,8 +6,6 @@
 
 **Autonomous penetration testing that keeps its receipts.**
 
-(upstream: [Autumn-27/ARTEX](https://github.com/Autumn-27), AGPL-3.0)
-
 Self-hosted multi-agent offensive security. A planner explores, workers run real tools,
 and every finding stays bound to the assets and HTTP traffic that prove it.
 
@@ -45,7 +43,7 @@ justify it, and every autonomous action passes through scope rules, approval gat
 
 ```bash
 git clone https://github.com/barrier-networks/bartex.git
-cd Barrier
+cd bartex
 cp .env.example .env            # set POSTGRES_PASSWORD (and optionally an LLM key)
 docker compose up -d --build    # builds from this checkout, starts PostgreSQL
 ```
@@ -309,7 +307,7 @@ worker remains confined to the intent it claimed.
 
 ```bash
 git clone https://github.com/barrier-networks/bartex.git
-cd Barrier
+cd bartex
 ./install.sh
 ```
 
@@ -328,7 +326,7 @@ first-run claim), or keep loopback and use a reverse proxy or SSH tunnel.
 
 ```bash
 git clone https://github.com/barrier-networks/bartex.git
-cd Barrier
+cd bartex
 cp .env.example .env            # set POSTGRES_PASSWORD, optionally ANTHROPIC_API_KEY
 docker compose up -d --build
 # → http://localhost:8787
@@ -559,7 +557,7 @@ when the database holds encrypted secrets and no key is available.
 Daily cron example (03:20, operator crontab):
 
 ```
-20 3 * * * cd /path/to/Barrier && scripts/backup.sh --with-data >> backups/backup.log 2>&1
+20 3 * * * cd /path/to/bartex && scripts/backup.sh --with-data >> backups/backup.log 2>&1
 ```
 
 ### Updating and upgrading
@@ -595,7 +593,7 @@ Your data is unaffected: `./data`, the `pgdata` volume and `./skills` are not pa
 #### Option 1: one-click update script
 
 ```bash
-cd Barrier
+cd bartex
 ./update.sh
 ```
 
@@ -606,7 +604,7 @@ recompile `./barrier`; restart the process for it to take effect).
 #### Option 2: Docker Compose (manual)
 
 ```bash
-cd Barrier
+cd bartex
 git pull
 docker compose build barrier
 docker compose up -d barrier
@@ -735,9 +733,9 @@ Operational security properties:
 
 ---
 
-## About this fork
+## About this project
 
-This repository is the English translation and continuation of Barrier, originally by [Autumn-27](https://github.com/Autumn-27). The upstream repository is no longer public, so the link points to the author profile. Changes in this fork are tracked in [CHANGELOG.md](CHANGELOG.md), under the same AGPL-3.0 license.
+Barrier is the autonomous penetration testing platform from [Barrier Networks](https://www.barriernetworks.com). It builds on **ARTEX**, the upstream project originally by [Autumn-27](https://github.com/Autumn-27) (the upstream repository is no longer public, so the link points to the author profile), continued in English by the ARTEX fork. Barrier is a rebrand and continuation of that work under the same **AGPL-3.0** license; changes are tracked in [CHANGELOG.md](CHANGELOG.md). The agent-core SDK is [`norma`](https://github.com/Autumn-27/norma), also by Autumn-27.
 
 ---
 
