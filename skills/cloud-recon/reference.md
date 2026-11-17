@@ -62,6 +62,38 @@ aws ec2 describe-snapshots --owner-ids self --query 'Snapshots[?Public]'
 aws rds describe-db-instances --query 'DBInstances[?PubliclyAccessible]'
 ```
 
+Pacu (`barrier-networks/pacu`) — headless AWS enumeration. Keys are the operator's
+scoped **read-only** keys for the authorised account only; never echo a key into any
+artifact. Pacu keeps results in a local SQLite session, cutting repeat API calls and
+CloudTrail noise.
+
+```bash
+SESS="eng-<task_id>"
+# Create the session and import scoped keys from a task-local aws CLI profile:
+pacu --new-session "$SESS"
+pacu --session "$SESS" --import-keys <aws_profile>      # or --set-keys to paste them
+pacu --session "$SESS" --set-regions <region1> <region2>   # or 'all' if the engagement allows
+pacu --session "$SESS" --whoami                         # CONFIRM identity == authorised account before continuing
+
+# Read-only enumeration modules:
+pacu --session "$SESS" --module-name iam__detect_honeytokens --exec   # catch a canary key first
+pacu --session "$SESS" --module-name aws__enum_account --exec
+pacu --session "$SESS" --module-name iam__enum_users_roles_policies_groups --exec
+pacu --session "$SESS" --module-name iam__enum_permissions --exec
+pacu --session "$SESS" --module-name ec2__enum --exec
+# Privilege-escalation path REPORT only (no exploitation):
+pacu --session "$SESS" --module-name iam__privesc_scan --module-args="--scan-only" --exec
+
+# Export the enumerated data into the work dir:
+pacu --session "$SESS" --data all > /app/data/tasks/<task_id>/cloud-recon/pacu-"$SESS".json
+```
+
+Scope discipline: only `*__enum*`, `iam__detect_honeytokens`, and `iam__privesc_scan --scan-only`
+are in scope here. Pacu's `*__backdoor_*`, `*injection*`, `ebs__download_*`/`*download*` (exfil),
+`detection__disruption`, `guardduty__whitelist_ip`, and `iam__bruteforce_permissions` modules
+mutate the target or exfiltrate data — run them only under an engagement that explicitly authorises
+them, and never confirm an in-module exploitation prompt under this skill.
+
 ### A3. AWS posture checklist
 
 - [ ] **S3**: public-access-block off; bucket policy / ACL granting `*`; website hosting; unencrypted; no access logging.

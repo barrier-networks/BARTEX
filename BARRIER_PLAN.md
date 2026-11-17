@@ -75,11 +75,21 @@ shipped-skills parser test:
 - `web-api-deep` (upgrade) — advanced authZ / injection / SSRF / business-logic
   and end-to-end exploit chaining extending `api-recon` + `api-security`.
 
-**Follow-up:** several referenced tools (Azure CLI, Prowler, ScoutSuite,
+**AWS tooling:** `cloud-recon` now drives **Pacu** (the Barrier Networks fork
+`barrier-networks/pacu`) for credentialed AWS assessment — headless `*__enum*`
+modules plus `iam__privesc_scan --scan-only` (reports escalation paths without
+exercising them). Pacu is installed in the `Dockerfile` (pinned venv at
+`/opt/pacu`). Its exploitation / persistence / exfiltration / log-manipulation
+modules are explicitly **out of scope** for the read-only skill and run only
+under an engagement that authorises them + the platform approval gate (ties into
+the RoE layer).
+
+**Follow-up:** other referenced tools (Azure CLI, Prowler, ScoutSuite,
 cloud_enum, naabu, fingerprintx, testssl.sh/sslscan) are **not yet in the
-container image** — add them to the `Dockerfile` tools stage so the skills can
-actually invoke them. The skills already tell the agent to verify a tool before
-use, so this is a capability gap, not a correctness bug.
+container image** — add them to the `Dockerfile` tools stage. The skills tell the
+agent to verify a tool before use, so this is a capability gap, not a bug. The
+Pacu Dockerfile addition has **not** been image-build-verified here (no Docker
+daemon); run the image build in CI.
 
 ### 2.4 Scoping / Rules-of-Engagement (RoE)
 <!-- FINALISE: filled in once the RoE implementation is verified -->
@@ -120,8 +130,10 @@ Four detailed design/research docs were produced and drive the feature work:
 
 1. Replace inferred brand palette/fonts with confirmed Barrier Networks values
    (needs `barriernetworks.com` network access); refresh `favicon.ico`.
-2. Add the cloud/infra tools to the Dockerfile tools stage so the new skills can
-   run their referenced tooling.
+2. Add the remaining cloud/infra tools to the Dockerfile tools stage (Pacu is
+   already wired for AWS; Azure CLI, Prowler, ScoutSuite, cloud_enum, naabu,
+   fingerprintx, testssl.sh/sslscan still pending) and build the image in CI to
+   verify (the Pacu addition is not yet build-verified here).
 3. RoE Phase 2: engagement UI (selector + detail page + task badge),
    authorisation records, intensity-cap / permitted-test-type enforcement, and
    the report "RoE recap" section.

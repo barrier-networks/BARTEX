@@ -67,6 +67,7 @@ Only with operator-supplied scoped keys and only against the authorized account.
 
 - **Prowler** (broad, provider-native, read-only by default): `prowler aws`, `prowler azure`, `prowler gcp`, with `-M json-ocsf,html` output into the work dir, optionally `--severity high critical` to triage first. Scope with `-f <region>` / `--region` and account/subscription/project filters.
 - **ScoutSuite** (multi-cloud, single HTML report): `scout aws|azure|gcp` into the work dir.
+- **Pacu** (AWS, Barrier Networks fork `barrier-networks/pacu`) — the AWS assessment framework. Drive it **headlessly** from the worker: create/select a session, import the operator's scoped read-only keys, confirm identity (`pacu --whoami`), then run its **enumeration** modules (`aws__enum_account`, `iam__enum_users_roles_policies_groups`, `iam__enum_permissions`, `ec2__enum`, `s3`/service `*__enum` modules) and the read-only analysis module `iam__privesc_scan`, which **reports** privilege-escalation paths without exercising them. Run `iam__detect_honeytokens` first so a canary key is caught before any call. Pacu keeps results in a local SQLite session (fewer API calls and CloudTrail logs); export them into the work dir. Exact command lines are in [reference.md](reference.md) §A2. **Pacu's active modules — anything `*__backdoor_*`, `*injection*`, `*download*`/exfil, `detection__disruption`, `guardduty__whitelist_ip`, `iam__bruteforce_permissions` — mutate the target or exfiltrate data and are OUT OF SCOPE for this read-only skill: they run only under an engagement that explicitly authorises them, and still pass through the platform scope/approval gate.**
 - The posture classes that matter most (see reference for the per-provider mapping):
   - **Public-access surface**: buckets/blobs/GCS with public ACLs or policies; public DB/compute endpoints; security groups / NSGs / firewall rules open to `0.0.0.0/0` on sensitive ports; public AMIs/snapshots/images.
   - **IAM misconfiguration surface**: wildcard (`*:*`) policies, `AssumeRole`/trust policies trusting `*` or external accounts, long-unrotated keys, users without MFA, overly broad service accounts, `iam:PassRole` + compute pairings, privilege-escalation policy shapes.
@@ -97,11 +98,12 @@ The CSPM tool produces *candidates*. Each is a lead, not a proof; Phase 3 confir
 | gcloud / gsutil / bq | GCP enumeration, `auth list`, `storage ls` | preinstalled & proxy-configured; read-only verbs only |
 | Prowler | credentialed CSPM posture scan (AWS/Azure/GCP) | pip/container; read-only by default — never remediation flags |
 | ScoutSuite | multi-cloud read-only posture report | pip/container; verify before use |
+| Pacu (`barrier-networks/pacu`) | AWS credentialed assessment framework — headless `*__enum*` + `iam__privesc_scan` (read-only path analysis) | Barrier Networks fork, installed in the image; enumeration/scan modules only under this skill |
 | cloud_enum | anonymous cross-provider bucket/resource name enumeration | verify in image; feed in-scope keywords only |
 | nuclei | cloud-exposure templates against in-scope hosts | shared with external-infra; within the impact budget |
 | curl + jq | manual bucket/endpoint probing and JSON triage | always available |
 
-Other named tools (Pacu, CloudSploit/Aqua, PMapper, enumerate-iam, cloudfox, Steampipe) are references: verify availability before relying on them, and never use Pacu's exploitation/attack modules under this skill — its enumeration-only modules, if used at all, must stay read-only.
+Pacu is the AWS assessment framework (see Phase 2 and reference §A2). Under this read-only skill only its enumeration and `iam__privesc_scan` **analysis** modules are in scope; its exploitation, persistence, exfiltration and log-manipulation modules require an engagement that explicitly authorises them and still pass through the platform scope/approval gates. Other named tools (CloudSploit/Aqua, PMapper, enumerate-iam, cloudfox, Steampipe) are references: verify availability before relying on them.
 
 ## Completion self-check
 

@@ -167,6 +167,20 @@ RUN set -eux; \
     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
 
 
+# Pacu AWS assessment framework — Barrier Networks fork (barrier-networks/pacu),
+# AGPL-compatible BSD-3. Own venv to isolate from the image python; pinned to a
+# commit so a moved tag/branch cannot change what ships. Used by the cloud-recon
+# skill for credentialed AWS enumeration (its *__enum* and iam__privesc_scan
+# --scan-only modules); exploitation/persistence/exfil modules run only under an
+# engagement that explicitly authorises them and the platform approval gate.
+ARG PACU_COMMIT=e597f23ecfb88b82f706c5f0cac9d4577c2af262
+RUN set -eux; \
+    python -m venv /opt/pacu; \
+    /opt/pacu/bin/pip install --no-cache-dir "git+https://github.com/barrier-networks/pacu.git@${PACU_COMMIT}"; \
+    ln -s /opt/pacu/bin/pacu /usr/local/bin/pacu; \
+    pacu --version >/dev/null
+
+
 # Preinstall Playwright MCP and CLI (globally) so no npx network download is needed at runtime.
 # @playwright/mcp: browser MCP runs directly via `npx @playwright/mcp` (installed globally, no -y/@latest needed).
 # @playwright/cli: provides playwright-cli, verified with --help right after install.
