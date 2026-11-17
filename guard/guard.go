@@ -152,6 +152,13 @@ func (g *Guard) applyIntercept(ctx context.Context, ev hook.Event) hook.Result {
 	scope, gated := g.gateScope(ctx)
 	rules := !g.targetOnly && g.interceptor != nil && g.interceptor.IsToolEnabled(ev.ToolName)
 	if !rules && !gated {
+		// Fast path: no user rules and the target gate is off. The engagement gate
+		// is still enforced when a policy is attached (it can only subtract reach),
+		// regardless of the target-gate opt-in. Platform/built-in deny already ran
+		// above, and with no user rules there is no user-rule/judge deny to mask.
+		if res, blocked := g.engagementStep(scope, ev); blocked {
+			return res
+		}
 		return hook.Result{}
 	}
 	ctx = intercept.WithCall(ctx, ev.ToolName, ev.Input)
@@ -169,6 +176,15 @@ func (g *Guard) applyIntercept(ctx context.Context, ev hook.Event) hook.Result {
 		// Note: a deny hit does not block for approval; it directly logs a denied entry (visible on the history / task interception pages).
 		g.interceptor.Log(ctx, intercept.ConvIDFromContext(ctx), dec, ev.ToolName, ev.Input, "denied")
 		return g.block(ev.ToolName, systemBlockMessage(dec.Message), "")
+	}
+	// Engagement gate: after the deny-rule/judge-deny step (so platform deny still
+	// wins and nothing is resolved on a deny) and before the target gate's
+	// CheckTargets. Gated only on an attached policy, not on scope.Enabled(): the
+	// engagement boundary is enforced even when the target gate (pin approval) is
+	// off. It only removes reach, so composing it here cannot weaken anything —
+	// on a pass the unchanged CheckTargets/rules still run afterwards.
+	if res, blocked := g.engagementStep(scope, ev); blocked {
+		return res
 	}
 	var unpinned []intercept.TargetRequest
 	if gated {
@@ -208,6 +224,21 @@ func (g *Guard) applyIntercept(ctx context.Context, ev hook.Event) hook.Result {
 		}
 	}
 	return hook.Result{}
+}
+
+// engagementStep enforces the session's Rules-of-Engagement policy on one tool
+// call. It returns (block result, true) when the engagement window/scope forbids
+// the call, or (zero, false) when there is no policy or the call passes. The
+// block reuses the existing platform-control framing (EngagementBlockMessage) and
+// is recorded through g.block, like every other block.
+func (g *Guard) engagementStep(scope intercept.TargetScope, ev hook.Event) (hook.Result, bool) {
+	if scope.Engagement == nil {
+		return hook.Result{}, false
+	}
+	if res := scope.Engagement.CheckEngagement(ev.ToolName, ev.Input); res.Code != "" {
+		return g.block(ev.ToolName, intercept.EngagementBlockMessage(res), ""), true
+	}
+	return hook.Result{}, false
 }
 
 // requestTargets asks for the approval of the targets no pin covers, waits for

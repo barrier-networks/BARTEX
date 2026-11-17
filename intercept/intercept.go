@@ -96,6 +96,12 @@ type TargetScope struct {
 	Enabled        func() bool
 	WaitBound      time.Duration
 	Interceptor    *Interceptor
+	// Engagement is the resolved Rules-of-Engagement boundary for this session.
+	// nil means no engagement is attached (engagement_id IS NULL) and the
+	// engagement step is skipped entirely — no behaviour change. When non-nil the
+	// engagement gate is enforced on every gated call regardless of Enabled: it
+	// can only subtract reach, never widen.
+	Engagement *EngagementPolicy
 }
 
 // WithTargetScope returns a child context carrying the target-gate scope of the
