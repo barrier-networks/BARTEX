@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/barrier-networks/bartex/db"
 )
 
 // Run against this package's own database (db.SuffixTestDatabase, #80): the

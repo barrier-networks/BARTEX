@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/barrier-networks/bartex/db"
 )
 
 // Pure tests for the F3 data envelope (#124): no database.

@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/barrier-networks/bartex/db"
 )
 
 // The exported report carries the coverage gaps and the completeness caveat;

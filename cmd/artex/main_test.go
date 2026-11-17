@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Autumn-27/artex/agent"
+	"github.com/barrier-networks/bartex/agent"
 )
 
 // The shutdown cause must survive the parent context being cancelled first;

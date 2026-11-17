@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/intercept"
 )
 
 // fakeGate scripts the target gate. check and request receive the number of

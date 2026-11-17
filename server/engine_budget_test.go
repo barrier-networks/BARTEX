@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	pgdb "github.com/Autumn-27/artex/db"
 	"github.com/Autumn-27/norma/llm"
+	"github.com/barrier-networks/bartex/agent"
+	pgdb "github.com/barrier-networks/bartex/db"
 )
 
 // With the budget env vars unset the engine decides exactly as before (no round

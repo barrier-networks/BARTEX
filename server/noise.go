@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/egress"
 )
 
 // startupNoiseProfile is the noise profile to apply at startup: the stored

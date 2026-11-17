@@ -21,17 +21,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/llmpool"
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/artex/report"
-	"github.com/Autumn-27/artex/traffic"
 	"github.com/Autumn-27/norma/llm"
 	actool "github.com/Autumn-27/norma/tool"
 	"github.com/Autumn-27/norma/transcript"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/egress"
+	"github.com/barrier-networks/bartex/intercept"
+	"github.com/barrier-networks/bartex/llmpool"
+	"github.com/barrier-networks/bartex/llmrec"
+	"github.com/barrier-networks/bartex/report"
+	"github.com/barrier-networks/bartex/traffic"
 )
 
 // BuildVersion is the backend application version, injected from cmd/artex at

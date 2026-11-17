@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic"
-	"github.com/Autumn-27/artex/traffic/rewrite"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/traffic"
+	"github.com/barrier-networks/bartex/traffic/rewrite"
 )
 
 const rewriteAPI = "/api/traffic/rewrite-rules"

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/barrier-networks/bartex/intercept"
 )
 
 func TestStageAskOperatorImage(t *testing.T) {

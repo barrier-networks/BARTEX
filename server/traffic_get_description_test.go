@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Autumn-27/artex/traffic"
+	"github.com/barrier-networks/bartex/traffic"
 )
 
 // The traffic_get description that says traffic_search never finds a value a

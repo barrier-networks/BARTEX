@@ -16,16 +16,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/config"
-	pgdb "github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/enrich"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/traffic"
-	"github.com/Autumn-27/artex/traffic/rewrite"
 	actool "github.com/Autumn-27/norma/tool"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/config"
+	pgdb "github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/egress"
+	"github.com/barrier-networks/bartex/enrich"
+	"github.com/barrier-networks/bartex/guard"
+	"github.com/barrier-networks/bartex/intercept"
+	"github.com/barrier-networks/bartex/traffic"
+	"github.com/barrier-networks/bartex/traffic/rewrite"
 )
 
 // Task is one engagement: a description + goal + its own exploration store,

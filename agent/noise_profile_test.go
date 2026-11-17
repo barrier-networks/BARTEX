@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/egress"
+	"github.com/barrier-networks/bartex/egress"
 )
 
 func TestRenderNoiseProfileOff(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/intercept"
 	actool "github.com/Autumn-27/norma/tool"
+	"github.com/barrier-networks/bartex/egress"
+	"github.com/barrier-networks/bartex/intercept"
 )
 
 // pinNoiseOff runs t with the off noise profile, whatever ARTEX_NOISE_PROFILE says.

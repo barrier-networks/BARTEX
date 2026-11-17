@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/notify"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/notify"
 )
 
 // Global setting keys (stored in the settings key-value table, no dedicated table needed).
