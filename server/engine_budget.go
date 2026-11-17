@@ -8,7 +8,7 @@ import (
 	"github.com/barrier-networks/bartex/llmrec"
 )
 
-// Hierarchical run budgets (agent/budget.go), off unless an ARTEX_*_BUDGET_* env
+// Hierarchical run budgets (agent/budget.go), off unless an BARRIER_*_BUDGET_* env
 // var is set. Every helper here is a no-op when budgetFor returns nil.
 
 // budgetFor returns the task's budget ledger, created on first use from the env;

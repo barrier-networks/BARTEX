@@ -11,7 +11,7 @@ import (
 	"github.com/barrier-networks/bartex/intercept"
 )
 
-// PG test: needs a PostgreSQL database (ARTEX_PG_DSN); skipped without one.
+// PG test: needs a PostgreSQL database (BARRIER_PG_DSN); skipped without one.
 // POST /api/intercept/pending/{id}/always-allow derives the rule from the
 // stored row, never from the body, and leaves the request pending.
 func TestInterceptAlwaysAllowPG(t *testing.T) {

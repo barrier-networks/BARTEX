@@ -323,7 +323,7 @@ const (
 	// agent/chat) have context compaction taken over by noa, replacing the built-in compaction. Read once per run; toggling affects only runs started afterwards.
 	settingNoaCompaction = "noa_compaction"
 	// Target noise profile (off|quiet|balanced|aggressive). When stored it wins over
-	// ARTEX_NOISE_PROFILE, which stays the fallback; applied at startup and on PUT.
+	// BARRIER_NOISE_PROFILE, which stays the fallback; applied at startup and on PUT.
 	settingNoiseProfile = "noise_profile"
 	// defaultWebSearchBackend is used when web search is on but no backend was picked.
 	defaultWebSearchBackend = "ddgs"

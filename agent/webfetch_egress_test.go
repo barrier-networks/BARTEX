@@ -11,7 +11,7 @@ import (
 	"github.com/barrier-networks/bartex/intercept"
 )
 
-// pinNoiseOff runs t with the off noise profile, whatever ARTEX_NOISE_PROFILE says.
+// pinNoiseOff runs t with the off noise profile, whatever BARRIER_NOISE_PROFILE says.
 func pinNoiseOff(t *testing.T) {
 	old := egressGovernor
 	egressGovernor = func() *egress.Governor { return egress.New(egress.Profile{Name: "off"}) }

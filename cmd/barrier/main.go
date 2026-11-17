@@ -1,4 +1,4 @@
-// Command artex runs the ARTEX backend: the dual PostgreSQL graph stores,
+// Command barrier runs the Barrier backend: the dual PostgreSQL graph stores,
 // the event-driven exploration engine, and the JSON HTTP API consumed by the
 // shadcn/ui frontend.
 package main
@@ -26,11 +26,11 @@ import (
 var version = "dev"
 
 const banner = `
-    _    ____ _____ _______  __
-   / \  |  _ \_   _| ____\ \/ /
-  / _ \ | |_) || | |  _|  \  /
- / ___ \|  _ < | | | |___ /  \
-/_/   \_\_| \_\|_| |_____/_/\_\
+ ____    _    ____  ____  ___ _____ ____
+| __ )  / \  |  _ \|  _ \|_ _| ____|  _ \
+|  _ \ / _ \ | |_) | |_) || ||  _| | |_) |
+| |_) / ___ \|  _ <|  _ < | || |___|  _ <
+|____/_/   \_\_| \_\_| \_\___|_____|_| \_\
 `
 
 // printBanner writes the startup banner + version/runtime info to stdout.
@@ -48,6 +48,10 @@ func main() {
 }
 
 func run() int {
+	// Honour pre-rebrand ARTEX_* environment variables by mirroring them to
+	// their BARRIER_* equivalents before anything reads the environment.
+	config.ApplyLegacyEnv()
+
 	var (
 		addr    = flag.String("addr", "127.0.0.1:8787", "HTTP listen address")
 		dataDir = flag.String("data", filepath.Join(config.BaseDir(), "data"), "runtime data directory: traffic index, task files, transcripts (default: data/ next to the executable)")
@@ -74,7 +78,7 @@ func run() int {
 	if _, e := os.Stat(cfgPath); e == nil {
 		log.Printf("[config] config file: %s", cfgPath)
 	} else {
-		log.Printf("[config] config file: %s (not found — will only try the environment variable ARTEX_PG_DSN)", cfgPath)
+		log.Printf("[config] config file: %s (not found — will only try the environment variable BARRIER_PG_DSN)", cfgPath)
 	}
 
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -101,9 +105,9 @@ func run() int {
 	keyDir := config.KeyDir()
 	log.Printf("[config] JWT key directory: %s", keyDir)
 	// Proxies whose X-Forwarded-For the login rate limit reads; empty trusts none.
-	trusted, err := server.ParseTrustedProxies(os.Getenv("ARTEX_TRUSTED_PROXIES"))
+	trusted, err := server.ParseTrustedProxies(os.Getenv("BARRIER_TRUSTED_PROXIES"))
 	if err != nil {
-		log.Printf("[config] ARTEX_TRUSTED_PROXIES: %v", err)
+		log.Printf("[config] BARRIER_TRUSTED_PROXIES: %v", err)
 		return 1
 	}
 	if len(trusted) > 0 {
@@ -122,7 +126,7 @@ func run() int {
 	}
 
 	go func() {
-		log.Printf("ARTEX %s backend listening on %s (data=%s, workers=%d)", version, *addr, *dataDir, mgr.Workers())
+		log.Printf("Barrier %s backend listening on %s (data=%s, workers=%d)", version, *addr, *dataDir, mgr.Workers())
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("serve: %v", err)
 		}
