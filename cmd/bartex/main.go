@@ -122,6 +122,10 @@ func run() int {
 		log.Printf("[config] trusted proxies: %v", trusted)
 	}
 	srv := server.New(ctx, mgr, skillDir, *dataDir, keyDir, server.WithSecretScrub(), server.WithTrustedProxies(trusted))
+	// Tell the server its own loopback base URL so the external-harness launcher
+	// can point a CLI at the governed MCP endpoint. A bind address like ":8787"
+	// or "0.0.0.0:8787" is reached over loopback from a sandboxed subprocess.
+	srv.SetSelfBaseURL("http://" + loopbackHostPort(*addr))
 	// ReadTimeout bounds how long the request headers and body may take to arrive.
 	// It does not limit how long a handler runs, so an event stream stays open.
 	// WriteTimeout is left unset: a write deadline would cut that stream.

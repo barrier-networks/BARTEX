@@ -60,6 +60,10 @@ type Server struct {
 	// mcpTokens scopes bearer tokens for the governed BARTEX Tools MCP server
 	// (/api/mcp): each token binds an external harness session to one task.
 	mcpTokens *mcpTokenStore
+	// selfBaseURL is this server's own loopback base URL (e.g.
+	// http://127.0.0.1:8787), used to tell an external harness where the governed
+	// MCP endpoint is. Set by the binary from the bind address.
+	selfBaseURL string
 
 	// concMu serializes concurrency-cap decisions (admission + reconcile) so a
 	// scheduler tick and an HTTP settings change / task creation can't both count
@@ -172,6 +176,8 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		provByProfile:  map[int64]*provEntry{},
 		taskAgents:     map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1),
 		loginLimit: newLoginLimiter(time.Now), mcpTokens: newMCPTokenStore()}
+	s.engine.SetHarnessRunner(s.runHarnessIntent)
+	s.selfBaseURL = "http://127.0.0.1:8787"
 	s.llmHealth, s.llmHealthSync = newLLMHealthRegistry(ctx, m.pg)
 	for _, o := range opts {
 		o(s)
@@ -746,7 +752,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/task-templates", s.pgCreateTaskTemplate)
 	mux.HandleFunc("PATCH /api/task-templates/{id}", s.pgUpdateTaskTemplate)
 	mux.HandleFunc("DELETE /api/task-templates/{id}", s.pgDeleteTaskTemplate)
+	mux.HandleFunc("GET /api/harness-profiles", s.listHarnessProfiles)
+	mux.HandleFunc("POST /api/harness-profiles", s.createHarnessProfile)
+	mux.HandleFunc("PATCH /api/harness-profiles/{id}", s.updateHarnessProfile)
+	mux.HandleFunc("DELETE /api/harness-profiles/{id}", s.deleteHarnessProfile)
 	mux.HandleFunc("POST /api/tasks/{id}/mcp-token", s.mintTaskMCPToken)
+	mux.HandleFunc("POST /api/tasks/{id}/harness", s.attachTaskHarness)
 	mux.HandleFunc("GET /api/tasks/{id}", s.getTask)
 	mux.HandleFunc("GET /api/tasks/{id}/outcome", s.taskOutcome)
 	mux.HandleFunc("GET /api/tasks/{id}/lessons", s.taskLessons)

@@ -3,12 +3,28 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/barrier-networks/bartex/harness"
 )
+
+// loopbackHostPort turns a bind address (":8787", "0.0.0.0:8787",
+// "127.0.0.1:8787") into a host:port a sandboxed subprocess can reach over
+// loopback. A wildcard or empty host becomes 127.0.0.1.
+func loopbackHostPort(addr string) string {
+	host, port, err := net.SplitHostPort(strings.TrimSpace(addr))
+	if err != nil {
+		return "127.0.0.1:8787"
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" || host == "[::]" {
+		host = "127.0.0.1"
+	}
+	return net.JoinHostPort(host, port)
+}
 
 // runMCPStdio runs the stdio↔HTTP MCP bridge: it forwards MCP JSON-RPC between
 // this process's stdin/stdout and the governed BARTEX Tools MCP server. An

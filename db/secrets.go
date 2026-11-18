@@ -80,6 +80,7 @@ var (
 	colLLMKey      = secretColumn{"llm_profiles", "api_key", false, ""}
 	colLLMProxy    = secretColumn{"llm_profiles", "proxy", false, ""} // may carry user:pass
 	colMCPEnv      = secretColumn{"mcp_servers", "env", true, ""}
+	colHarnessEnv  = secretColumn{"harness_profiles", "env", true, ""} // launch env; may carry CLI API keys
 	colCredPass    = secretColumn{"task_credentials", "password", false, ""}
 	colNotifConfig = secretColumn{"notification_channels", "config", true, ""}
 	colToolExec    = secretColumn{"tools", "exec", true, ""} // system=false rows: headers, proxy, body, code, command
@@ -90,7 +91,7 @@ var (
 	// Capture-proxy rewrite rules: an action may carry a token, a matcher a header value.
 	colRewriteMatchers = secretColumn{"traffic_rewrite_rules", "matchers", true, ""}
 	colRewriteActions  = secretColumn{"traffic_rewrite_rules", "actions", true, ""}
-	secretColumns      = append([]secretColumn{colLLMKey, colLLMProxy, colMCPEnv, colCredPass, colNotifConfig, colToolExec, colEvReqHead, colEvRespHead, colRewriteMatchers, colRewriteActions}, secretSettingColumns()...)
+	secretColumns      = append([]secretColumn{colLLMKey, colLLMProxy, colMCPEnv, colHarnessEnv, colCredPass, colNotifConfig, colToolExec, colEvReqHead, colEvRespHead, colRewriteMatchers, colRewriteActions}, secretSettingColumns()...)
 )
 
 // secretSettingKeys are the settings stored encrypted, AAD "settings.<key>".
