@@ -21,7 +21,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -62,6 +70,46 @@ const MAX_TOKENS_FIELD_HINTS: Record<string, string> = {
 // keyless local-server format (base URL defaults to http://127.0.0.1:11434/v1).
 type ProfileFormat = "anthropic" | "openai" | "openai-responses" | "ollama";
 const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434/v1";
+
+// Quick presets that prefill format + base URL for common local, self-hosted and
+// OpenAI-compatible endpoints. They only set defaults; every field stays editable.
+// A local gateway (e.g. LiteLLM) lets Barrier reach the same models an agent CLI
+// (Claude Code, Codex, Aider, …) uses — one endpoint fronting cloud + local.
+type ProviderPreset = { label: string; format: ProfileFormat; baseUrl: string; model?: string };
+const PROVIDER_PRESETS: { group: string; items: ProviderPreset[] }[] = [
+  {
+    group: "Local / self-hosted",
+    items: [
+      { label: "Ollama", format: "ollama", baseUrl: OLLAMA_DEFAULT_BASE_URL, model: "llama3.2" },
+      { label: "vLLM", format: "openai", baseUrl: "http://127.0.0.1:8000/v1" },
+      { label: "LM Studio", format: "openai", baseUrl: "http://127.0.0.1:1234/v1" },
+      { label: "llama.cpp (llama-server)", format: "openai", baseUrl: "http://127.0.0.1:8080/v1" },
+      { label: "LocalAI", format: "openai", baseUrl: "http://127.0.0.1:8080/v1" },
+      { label: "Text Generation WebUI", format: "openai", baseUrl: "http://127.0.0.1:5000/v1" },
+    ],
+  },
+  {
+    group: "Local gateway (one endpoint, many models)",
+    items: [{ label: "LiteLLM proxy", format: "openai", baseUrl: "http://127.0.0.1:4000" }],
+  },
+  {
+    group: "Hosted (OpenAI-compatible)",
+    items: [
+      { label: "OpenRouter", format: "openai", baseUrl: "https://openrouter.ai/api/v1" },
+      { label: "Groq", format: "openai", baseUrl: "https://api.groq.com/openai/v1" },
+      { label: "Together AI", format: "openai", baseUrl: "https://api.together.xyz/v1" },
+      { label: "DeepSeek", format: "openai", baseUrl: "https://api.deepseek.com" },
+      { label: "Fireworks AI", format: "openai", baseUrl: "https://api.fireworks.ai/inference/v1" },
+    ],
+  },
+  {
+    group: "Direct",
+    items: [
+      { label: "Anthropic", format: "anthropic", baseUrl: "" },
+      { label: "OpenAI", format: "openai", baseUrl: "https://api.openai.com/v1" },
+    ],
+  },
+];
 const EFFORT_LEVELS: { value: string; label: string }[] = [
   { value: NONE, label: "Not sent (default)" },
   { value: "low", label: "low" },
@@ -322,6 +370,7 @@ function ProfileSheet({
   const [format, setFormat] = React.useState<ProfileFormat>("anthropic");
   const [model, setModel] = React.useState("");
   const [baseUrl, setBaseUrl] = React.useState("");
+  const [preset, setPreset] = React.useState("");
   const [proxy, setProxy] = React.useState("");
   const [apiKey, setApiKey] = React.useState("");
   const [keyHint, setKeyHint] = React.useState("");
@@ -357,6 +406,7 @@ function ProfileSheet({
     );
     setModel(profile?.model ?? "");
     setBaseUrl(profile?.base_url ?? "");
+    setPreset("");
     setProxy(profile?.proxy ?? "");
     setRps(String(profile?.rate_per_second ?? 0));
     setRpm(String(profile?.rate_per_minute ?? 0));
@@ -514,6 +564,42 @@ function ProfileSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+          <div className="grid gap-2">
+            <Label>Quick preset (optional)</Label>
+            <Select
+              value={preset}
+              onValueChange={(v) => {
+                setPreset(v);
+                const p = PROVIDER_PRESETS.flatMap((g) => g.items).find((x) => x.label === v);
+                if (p) {
+                  setFormat(p.format);
+                  setBaseUrl(p.baseUrl);
+                  if (p.model) setModel((m) => (m.trim() ? m : (p.model as string)));
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Prefill format + base URL for a known provider…" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROVIDER_PRESETS.map((g) => (
+                  <SelectGroup key={g.group}>
+                    <SelectLabel>{g.group}</SelectLabel>
+                    {g.items.map((it) => (
+                      <SelectItem key={it.label} value={it.label}>
+                        {it.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Presets only prefill the format and base URL — set the model, and an API key for
+              hosted providers, below. Local servers (Ollama, vLLM, llama.cpp, LM Studio) and a
+              LiteLLM gateway run keyless on localhost.
+            </p>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="p-name">Name</Label>

@@ -85,6 +85,40 @@ does not reset it; the profile order and switch remain persisted.
 The task creation and `PUT /api/tasks/{id}/llm` APIs accept `llm_rotate: true` alongside
 the ordered `llm_profile_ids`. Omitting `llm_rotate` on an update preserves its value.
 
+## Local, self-hosted & agent-harness models
+
+Barrier is model-agnostic and can run **fully local / air-gapped** — no cloud key
+required. A profile's **format** is how it talks on the wire; a **base URL** points it
+anywhere:
+
+- **Ollama** — keyless, local. Default base URL `http://127.0.0.1:11434/v1`.
+- **Any OpenAI-compatible server** — pick the `openai` format and set the base URL:
+  vLLM (`:8000/v1`), LM Studio (`:1234/v1`), llama.cpp `llama-server` (`:8080/v1`),
+  LocalAI, Text Generation WebUI (`:5000/v1`), and hosted relays (OpenRouter, Groq,
+  Together, DeepSeek, Fireworks).
+
+In **System → LLM → New profile**, the **Quick preset** dropdown prefills the format and
+base URL for all of the above — set the model (and, for hosted providers, an API key) and
+hit **Test connection**. Local servers run keyless.
+
+**Use the same models as your agent CLI.** If you already run **Claude Code**, **Codex**,
+**Aider** or similar locally, stand up a **local gateway** (e.g. [LiteLLM](https://github.com/BerriAI/litellm),
+`litellm --port 4000`) that fronts your cloud and local models behind one
+OpenAI-compatible endpoint, then point Barrier at it with the **LiteLLM proxy** preset
+(`http://127.0.0.1:4000`). One endpoint, every model, shared across your tooling and Barrier.
+
+**Headless / boot config** (no UI) via environment:
+
+```bash
+BARRIER_LLM_PROVIDER=ollama               # anthropic | openai | openai-responses | ollama
+BARRIER_LLM_BASE_URL=http://127.0.0.1:11434/v1   # optional; ollama defaults to this
+BARRIER_LLM_MODEL=llama3.2
+# ANTHROPIC_API_KEY / OPENAI_API_KEY        # only for the cloud formats; ollama is keyless
+```
+
+The worker pool, rotation and failover above work across any mix of these — e.g. a local
+Ollama profile and a hosted relay in the same chain.
+
 ## Screenshots
 
 | Tasks | Findings |
