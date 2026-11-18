@@ -835,6 +835,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/exploration/findings/asset-tree", s.findingAssetTree)
 	mux.HandleFunc("GET /api/exploration/findings/stats", s.findingStats)
 	mux.HandleFunc("GET /api/exploration/findings/export", s.findingsExport)
+	// Client-ready, Barrier-branded report for a single task: HTML (always
+	// available) and PDF (headless Chromium; 501 when no browser is present).
+	mux.HandleFunc("GET /api/tasks/{id}/report.html", s.getTaskReportHTML)
+	mux.HandleFunc("GET /api/tasks/{id}/report.pdf", s.getTaskReportPDF)
 	s.registerFindingTraffic(mux)
 	mux.HandleFunc("GET /api/exploration/findings/{id}", s.getFinding)
 	mux.HandleFunc("GET /api/exploration/findings/{id}/lineage", s.findingLineage)

@@ -91,16 +91,52 @@ agent to verify a tool before use, so this is a capability gap, not a bug. The
 Pacu Dockerfile addition has **not** been image-build-verified here (no Docker
 daemon); run the image build in CI.
 
-### 2.4 Scoping / Rules-of-Engagement (RoE)
-<!-- FINALISE: filled in once the RoE implementation is verified -->
-See §3. Designed as an **additive** layer that can only *subtract* reach
-(engagement window + allow/deny scope enforced at the single guard choke point),
-with a nil-engagement no-regression fallback.
+### 2.4 Scoping / Rules-of-Engagement (RoE) ✅ (Phase 1) / ⏭️ (Phase 2)
+**Landed & verified.** An additive engagement layer that can only *subtract*
+reach. An engagement binds a task to a client with an authorised scope, a
+deny-list, a time window, a status and an intensity cap. Enforcement sits at the
+single guard choke point (`guard.applyIntercept`), **after** platform/user/judge
+deny (so deny still wins) and **before** the target gate, gated only on an
+attached policy — so the window/scope are enforced even when the target-gate
+opt-in is off. Fail-closed throughout: not-active / window-closed / deny-match /
+no-allow-match / undecidable / unresolvable-policy / unparseable-deny-row all
+**block**; `engagement_id IS NULL` skips the step entirely (no regression, proven
+by test). Migration `0007` (additive) + `schema.sql` parity; minimal
+create/list/get/scope/attach API. Verified: full Go suite green against
+PostgreSQL 16.
 
-### 2.5 Client-ready reporting
-<!-- FINALISE: filled in once the reporting implementation is verified -->
-See §3. Designed as a Barrier-branded, UK-style PDF (exec summary + CVSS-scored
-findings + linked evidence) built from the existing evidence graph.
+**Phase 2 (follow-up):** engagement UI (selector + detail page + task badge),
+authorisation records surfaced, intensity-cap / permitted-test-type composition
+with the noise governor, and the report "RoE recap" section.
+
+### 2.5 Client-ready reporting ✅ (core) / ⏭️ (enrichment)
+**Landed & verified.** A Barrier-branded, UK-style client report built from the
+existing findings:
+- `report/cvss` — a dependency-free CVSS v3.1 base-score implementation
+  (vector parse + score + severity band), unit-tested against FIRST reference
+  vectors (9.8, 10.0, …). `Resolve` prefers an analyst-set vector and otherwise
+  derives an **indicative** score from the finding's severity, labelled as such.
+- `report/clientreport.go` + template — a print-friendly HTML report: cover with
+  CONFIDENTIAL classification, document control, executive summary with a
+  severity breakdown and risk narrative, scope & methodology (OWASP / NIST
+  SP 800-115 / NCSC CAF), a findings summary table with CVSS, and detailed
+  findings (CVSS, status, verification, PoE, summary, evidence, captured
+  traffic). Barrier logo + brand palette.
+- `report/pdf.go` — renders the HTML to **PDF via headless Chromium**
+  (discovered at `BARRIER_CHROMIUM` → `/opt/pw-browsers/chromium` → PATH); no Go
+  dependency added. Verified end-to-end (a real PDF is produced in this
+  environment).
+- Routes: `GET /api/tasks/{id}/report.html` (always available) and
+  `GET /api/tasks/{id}/report.pdf` (501 + guidance when no browser). Document
+  framing (client, classification, authoriser, window, scope) comes from query
+  parameters; the task id is validated so a report can never span tasks.
+
+**Phase 2 (follow-up):** persist an analyst-set CVSS vector per finding
+(migration + DB field + UI calculator) so scores stop being indicative; populate
+the captured-request/response **evidence excerpts** in the report (the findings
+list query returns binding metadata but not bodies yet); auto-fill the document
+meta from the task's engagement (name/window/scope/authorisation); and a
+Download-report button in the web UI.
 
 ---
 
@@ -137,8 +173,10 @@ Four detailed design/research docs were produced and drive the feature work:
 3. RoE Phase 2: engagement UI (selector + detail page + task badge),
    authorisation records, intensity-cap / permitted-test-type enforcement, and
    the report "RoE recap" section.
-4. Reporting Phase 2: CVSS calculator + analyst entry, Download-PDF buttons,
-   optional pure-Go PDF engine for browser-forbidden deployments.
+4. Reporting Phase 2: persist analyst-set CVSS vectors (so scores stop being
+   indicative), populate request/response evidence excerpts in the report,
+   auto-fill document meta from the engagement, Download-report button in the UI,
+   and optionally a pure-Go PDF engine for browser-forbidden deployments.
 5. Internal cosmetic cleanup (optional): the `artex_token` cookie name and the
    `ARTEX_DATA` marker stem remain for compatibility; rename in lockstep if a
    fully brand-consistent internal surface is wanted.
