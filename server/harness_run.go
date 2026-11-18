@@ -95,7 +95,7 @@ func (s *Server) mcpEndpoint() string {
 	if base == "" {
 		base = "http://127.0.0.1:8787"
 	}
-	return base + "/api/mcp"
+	return base + "/api/harness-mcp"
 }
 
 // SetSelfBaseURL records this server's own loopback base URL (scheme+host+port,

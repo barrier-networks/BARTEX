@@ -2,7 +2,7 @@
 
 Grounding for the Phase 1 launcher (`docs/harness-execution-backend.md`). It
 records how the candidate local agentic CLIs are launched non-interactively, how
-they connect to the governed BARTEX Tools MCP server (Phase 0, `/api/mcp`), and
+they connect to the governed BARTEX Tools MCP server (Phase 0, `/api/harness-mcp`), and
 how their own sandboxes compose with ours. Version-sensitive flags are flagged
 **verify** — confirm against the installed CLI's `--help` / `config.md`, since
 these tools move fast.
@@ -37,7 +37,7 @@ Codex CLI with Daybreak on**.
     [mcp_servers.bartex]
     command = "bartex"
     args    = ["mcp-stdio"]
-    env     = { BARTEX_MCP_ENDPOINT = "http://127.0.0.1:8787/api/mcp", BARTEX_MCP_TOKEN = "<minted>" }
+    env     = { BARTEX_MCP_ENDPOINT = "http://127.0.0.1:8787/api/harness-mcp", BARTEX_MCP_TOKEN = "<minted>" }
     ```
   - **HTTP (works, rougher):** `url` + `bearer_token_env_var = "BARTEX_MCP_TOKEN"`.
     Streamable HTTP rides the **experimental RMCP client** — enable
@@ -97,7 +97,7 @@ sandbox off and no outer box.
 1. A freshly minted **task-scoped MCP token** (`POST /api/tasks/{id}/mcp-token`).
 2. **MCP wiring** for the chosen transport: stdio → write a temp
    `config.toml`/`--mcp-config` pointing at `bartex mcp-stdio` with
-   `BARTEX_MCP_ENDPOINT`+`BARTEX_MCP_TOKEN`; http → the `/api/mcp` URL +
+   `BARTEX_MCP_ENDPOINT`+`BARTEX_MCP_TOKEN`; http → the `/api/harness-mcp` URL +
    `bearer_token_env_var`.
 3. **Proxy egress env** (`proxyEnv`: `HTTP(S)_PROXY`, CA bundle vars) so the
    CLI's own HTTP is recorded and scope-gated.

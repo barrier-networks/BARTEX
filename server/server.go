@@ -1056,8 +1056,10 @@ func (s *Server) Handler() http.Handler {
 	root.Handle("/api/", api)
 	// The governed BARTEX Tools MCP server authenticates on its own task-scoped
 	// bearer token (the SessionBinder), so it is mounted outside the operator-JWT
-	// requireAuth wrapper. The more specific pattern wins over "/api/".
-	root.Handle("/api/mcp", s.mcpHandler())
+	// requireAuth wrapper. The more specific pattern wins over "/api/". It lives at
+	// /api/harness-mcp, NOT /api/mcp — the latter is the operator MCP-servers
+	// management API.
+	root.Handle("/api/harness-mcp", s.mcpHandler())
 	root.Handle("/", s.webuiHandler())
 	return limitRequestBody(root)
 }

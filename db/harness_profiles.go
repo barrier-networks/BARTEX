@@ -53,7 +53,7 @@ func (d *DB) ListHarnessProfiles() ([]*HarnessProfile, error) {
 // needs the real values), or nil when not found.
 func (d *DB) HarnessProfileByID(id int64) (*HarnessProfile, error) {
 	var p HarnessProfile
-	err := scanHarnessWithEnv(d.QueryRow(`SELECT `+harnessCols+`, env FROM harness_profiles WHERE id=`, id), &p, true)
+	err := scanHarnessWithEnv(d.QueryRow(`SELECT `+harnessCols+`, env FROM harness_profiles WHERE id=$1`, id), &p, true)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
