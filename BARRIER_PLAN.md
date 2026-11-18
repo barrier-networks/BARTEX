@@ -57,19 +57,20 @@ engineering audience picking the work up.
   review-only in the guidelines, not the brand face); mono Cascadia/Consolas.
   Status hues stay published-fixed: **Jade `#006951`** success, **Brick
   `#A73030`** error, **Amber `#855400`** warning.
-- **The console carries the AdversaryOps sub-brand** (the red-team pillar).
-  Applied to `web/src/app/globals.css` (light + dark):
-  - **Red Glow `#ED4545`** is the brand red (primary/accent/ring); **Red Deep
-    `#170202`** leads dark surfaces; the signature **red gradient** (Red Glow →
-    Red Deep) is on the login/setup panels via `--brand-gradient`.
+- **One palette for all offerings.** Per the current guidelines, service
+  offerings no longer take separate colours: AdversaryOps (and CISOaaS, ROC,
+  Assure, …) all share the **core Cobalt/Deep/Glow** palette and differ only by
+  **name and logo**. The console uses that core palette (`globals.css`, light +
+  dark) with the Cobalt→Deep gradient on the login/setup panels.
+- **The console carries the AdversaryOps offering:**
   - Product name/title → **AdversaryOps** (`app-config`, login, setup, sidebar);
     the operator *username* stays `Barrier` (backend-asserted).
   - **Logo: the real AdversaryOps mark**, downloaded from the brand Figma
     (node `99:86`, "Supplied White · original SVG geometry") and used verbatim
-    at `web/public/logo.svg` (+ raster) — not a recreation. It renders in Red
-    Glow on light surfaces and white (inverted) on the red gradient panels.
-    (Downloading it required allow-listing `www.figma.com` on the environment,
-    which the user approved.)
+    at `web/public/logo.svg` (+ raster) — not a recreation. Painted in the core
+    brand colour (Deep on light, white when inverted on dark surfaces), per the
+    "paint only" variants. (Downloading it needed `www.figma.com` on the
+    environment allowlist, which the user approved.)
 - **Note:** the client **report** still carries **Barrier Networks** company
   branding (Cobalt + the earlier mark) rather than AdversaryOps red, on the view
   that a client report is a consultancy deliverable; switch it to AdversaryOps or
