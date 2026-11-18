@@ -16,8 +16,6 @@ import type {
   Asset,
   AssetInterceptRule,
   AssetInterceptRuleInput,
-  TaskCredential,
-  TaskCredentialInput,
   Audit,
   BatchCategoryItem,
   BatchControlItem,
@@ -48,6 +46,8 @@ import type {
   FindingsPage,
   FindingTraffic,
   FindingTrafficDetail,
+  HarnessProfile,
+  HarnessProfileInput,
   IntentAsset,
   InterceptApprovalFilter,
   InterceptApprovalRow,
@@ -88,6 +88,8 @@ import type {
   TaskAssetScopeMutation,
   TaskCategory,
   TaskConstraint,
+  TaskCredential,
+  TaskCredentialInput,
   TaskGoal,
   TaskLLMResolutions,
   TaskNode,
@@ -889,8 +891,7 @@ export const api = {
   // Channels are multi-instance resources (several bots of the same kind, each with its own
   // filter rules), so they form their own group instead of the flat settings key/value store.
   notifyMeta: () => get<NotificationMeta>(`/notify/meta`),
-  notifyChannels: () =>
-    get<{ channels: NotificationChannel[] }>(`/notify/channels`).then((r) => arr(r.channels)),
+  notifyChannels: () => get<{ channels: NotificationChannel[] }>(`/notify/channels`).then((r) => arr(r.channels)),
   notifyCreateChannel: (payload: {
     name: string;
     kind: string;
@@ -1168,8 +1169,12 @@ export const api = {
     t: Pick<Tool, "description" | "schema" | "agents" | "enabled" | "kind" | "exec" | "deferred">,
   ) => put<{ ok: boolean }>(`/tools/custom/${key}`, t),
   deleteCustomTool: (key: string) => del<{ deleted: string }>(`/tools/custom/${key}`),
-  testCustomTool: (body: { key?: string; kind: string; exec: Record<string, unknown>; params: Record<string, unknown> }) =>
-    post<{ output: string; is_error: boolean }>("/tools/custom/test", body),
+  testCustomTool: (body: {
+    key?: string;
+    kind: string;
+    exec: Record<string, unknown>;
+    params: Record<string, unknown>;
+  }) => post<{ output: string; is_error: boolean }>("/tools/custom/test", body),
   detectPython: () => post<{ python_interpreter: string }>("/settings/python/detect", {}),
 
   // ---- mcp ----
@@ -1379,4 +1384,13 @@ export const api = {
   // ledger, exact per call, covering per-agent bindings / pooling / interrupted spend).
   tokensByModel: (task: string) =>
     get<{ models: ModelTokenStat[] }>(`/llm/records/by-model?task=${encodeURIComponent(task)}`),
+
+  // ---- external-harness backends ----
+  harnessProfiles: () => get<HarnessProfile[]>("/harness-profiles").then((r) => arr(r)),
+  createHarnessProfile: (input: HarnessProfileInput) => post<{ id: number }>("/harness-profiles", input),
+  updateHarnessProfile: (id: number, input: HarnessProfileInput) =>
+    patch<{ id: number }>(`/harness-profiles/${id}`, input),
+  deleteHarnessProfile: (id: number) => del<{ ok: boolean }>(`/harness-profiles/${id}`),
+  attachTaskHarness: (taskId: string, harnessProfileId: number | null) =>
+    post<{ ok: boolean }>(`/tasks/${encodeURIComponent(taskId)}/harness`, { harness_profile_id: harnessProfileId }),
 };

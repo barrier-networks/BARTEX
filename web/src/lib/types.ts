@@ -7,6 +7,7 @@ export type EngineMode = "exploring" | "paused" | "stalled" | "idle";
 export interface Task {
   id: string;
   name?: string; // optional task name; empty/absent = untitled, display falls back to the description
+  harness_profile_id?: number | null; // external-harness backend; null/absent = built-in loop
   category_id?: number;
   category_name?: string;
   pinned?: boolean;
@@ -1262,6 +1263,36 @@ export interface AgentDetail {
 }
 
 // ---- MCP ----
+// External-harness execution backend: how to launch a local agentic CLI
+// (Codex/Daybreak, Claude Code, …) as a task's worker. See
+// docs/harness-execution-backend.md.
+export interface HarnessProfile {
+  id: number;
+  name: string;
+  kind: "codex" | "claude-code" | "custom";
+  command: string;
+  args: string[];
+  env_keys?: string[]; // names only; values are sealed and never returned
+  mcp_transport: "stdio" | "http";
+  disable_native_sandbox: boolean;
+  daybreak: boolean;
+  max_turns: number;
+  max_duration_seconds: number;
+}
+
+export interface HarnessProfileInput {
+  name: string;
+  kind: "codex" | "claude-code" | "custom";
+  command: string;
+  args: string[];
+  env?: Record<string, string>; // omitted on update = keep stored env
+  mcp_transport: "stdio" | "http";
+  disable_native_sandbox: boolean;
+  daybreak: boolean;
+  max_turns: number;
+  max_duration_seconds: number;
+}
+
 export interface MCPServer {
   id: number;
   name: string;
@@ -1409,7 +1440,6 @@ export type TaskCredential = TaskCredentialInput & {
   created_at: string;
   updated_at: string;
 };
-
 
 export interface AssetInterceptRule {
   id: number;

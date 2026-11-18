@@ -87,6 +87,11 @@ type Task struct {
 	// policy from the DB; the result is cached per task (engagementLoaded), so the
 	// hot path does no DB work. A resolve error is NOT cached (retried next call)
 	// and yields a blocking, unresolved policy (fail safe).
+	// HarnessProfileID selects an external-harness execution backend (nil = the
+	// built-in loop). Set at load from the task row; read by the engine's worker
+	// dispatch. Stable for a task's lifetime in practice (changed via the API).
+	HarnessProfileID *int64 `json:"harness_profile_id,omitempty"`
+
 	engagementMu     sync.Mutex
 	engagementID     *int64
 	engagementPol    *intercept.EngagementPolicy
@@ -831,6 +836,10 @@ func (m *Manager) Traffic() *traffic.Traffic { return m.traffic }
 //
 // So the global proxy takes effect in both modes: at the MITM's upstream when
 // capturing, in the agent's own bash env / WebFetch when not.
+// DataDir returns the runtime data directory root (task files, transcripts). The
+// external-harness launcher confines a CLI to <DataDir>/tasks/<id>/i<intent>.
+func (m *Manager) DataDir() string { return m.dir }
+
 func (m *Manager) ProxyAddr() string {
 	if m.traffic != nil && m.TrafficEnabled() {
 		return m.traffic.ProxyAddr()
@@ -940,6 +949,10 @@ func taskFromPG(pt *pgdb.Task, store *pgdb.ExplorationStore, ic *intercept.Inter
 	if pt.EngagementID != nil {
 		eid := *pt.EngagementID
 		t.engagementID = &eid
+	}
+	if pt.HarnessProfileID != nil {
+		hid := *pt.HarnessProfileID
+		t.HarnessProfileID = &hid
 	}
 	t.engagementLoader = loadEngagement
 	return t

@@ -16,6 +16,7 @@ import {
   ShieldAlertIcon,
   ShieldCheckIcon,
   TargetIcon,
+  TerminalIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -28,10 +29,12 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
+import { setVisibleInterval } from "@/lib/polling";
 import type {
   AssetInterceptKind,
   AssetInterceptRule,
   Finding,
+  HarnessProfile,
   ModelTokenStat,
   Stats,
   Task,
@@ -40,7 +43,6 @@ import type {
   TaskNode,
   TaskScopeRow,
 } from "@/lib/types";
-import { setVisibleInterval } from "@/lib/polling";
 
 // Compact token count formatting (12345 → 12.3k, 2000000 → 2M).
 function fmtTokens(n: number): string {
@@ -571,7 +573,9 @@ export function OverviewTab({ taskId }: { taskId: string }) {
               )}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No goals yet. Once added, the planner dispatches exploration intents from them and judges completion.</p>
+            <p className="text-muted-foreground text-sm">
+              No goals yet. Once added, the planner dispatches exploration intents from them and judges completion.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -583,7 +587,8 @@ export function OverviewTab({ taskId }: { taskId: string }) {
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldAlertIcon className="size-4 text-amber-500" /> Operation constraints
             <span className="text-muted-foreground text-xs font-normal">
-              (bounds planner/worker exploration, {constraints.length} in total; changes take effect at the next planning round)
+              (bounds planner/worker exploration, {constraints.length} in total; changes take effect at the next
+              planning round)
             </span>
           </CardTitle>
         </CardHeader>
@@ -698,7 +703,8 @@ export function OverviewTab({ taskId }: { taskId: string }) {
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
-              No operation constraints yet. They are extracted automatically from the description/goal at task creation; you can also add, edit, or delete them here to bound which operations are allowed/denied.
+              No operation constraints yet. They are extracted automatically from the description/goal at task creation;
+              you can also add, edit, or delete them here to bound which operations are allowed/denied.
             </p>
           )}
         </CardContent>
@@ -820,7 +826,9 @@ export function OverviewTab({ taskId }: { taskId: string }) {
               </div>
             </>
           ) : (
-            <p className="text-muted-foreground text-sm">No LLM usage yet (the task has made no calls, or records are still being written).</p>
+            <p className="text-muted-foreground text-sm">
+              No LLM usage yet (the task has made no calls, or records are still being written).
+            </p>
           )}
         </CardContent>
       </Card>
@@ -906,7 +914,9 @@ export function OverviewTab({ taskId }: { taskId: string }) {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No test scope yet; once added it serves as the asset coverage denominator.</p>
+            <p className="text-muted-foreground text-sm">
+              No test scope yet; once added it serves as the asset coverage denominator.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -955,6 +965,9 @@ export function OverviewTab({ taskId }: { taskId: string }) {
           ) : null}
         </CardContent>
       </Card>
+
+      {/* Execution backend: built-in loop, or an external-harness profile. */}
+      <HarnessBackendCard taskId={taskId} current={task?.harness_profile_id ?? null} />
 
       {/* Work set */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -1026,7 +1039,9 @@ export function OverviewTab({ taskId }: { taskId: string }) {
           <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
             <CardTitle className="flex items-center gap-2 text-sm">
               <AlertTriangleIcon className="size-4 text-red-500" /> Blocked/errored intents
-              <span className="text-xs font-normal text-muted-foreground">({blocked.length} in total, re-runnable)</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                ({blocked.length} in total, re-runnable)
+              </span>
             </CardTitle>
             <Button size="sm" variant="outline" disabled={rerunning.has("__all__")} onClick={() => void rerunAll()}>
               <RefreshCwIcon className={`size-3.5 ${rerunning.has("__all__") ? "animate-spin" : ""}`} />
@@ -1063,7 +1078,12 @@ export function OverviewTab({ taskId }: { taskId: string }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard label="Open intents" value={open.length} icon={ShieldCheckIcon} sub="frontier open" />
         <StatCard label="Confirmed findings" value={taskFindings.length} icon={BugIcon} sub="this task" />
-        <StatCard label="Total intents" value={intents.length} icon={AlertTriangleIcon} sub="all intents of this task" />
+        <StatCard
+          label="Total intents"
+          value={intents.length}
+          icon={AlertTriangleIcon}
+          sub="all intents of this task"
+        />
       </div>
     </div>
   );
@@ -1332,9 +1352,87 @@ function TaskInterceptRulesCard({ taskId }: { taskId: string }) {
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            No task-level rules. A "Block" hit forbids testing; "Allow" is a whitelist — once configured, this task only permits assets that match an allow rule (no whitelist when unconfigured).
+            No task-level rules. A "Block" hit forbids testing; "Allow" is a whitelist — once configured, this task only
+            permits assets that match an allow rule (no whitelist when unconfigured).
           </p>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// HarnessBackendCard shows and changes a task's execution backend: the built-in
+// loop, or an external-harness profile managed under System → Harness.
+function HarnessBackendCard({ taskId, current }: { taskId: string; current: number | null }) {
+  const [profiles, setProfiles] = React.useState<HarnessProfile[]>([]);
+  const [selected, setSelected] = React.useState<number | null>(current);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState("");
+
+  React.useEffect(() => {
+    setSelected(current);
+  }, [current]);
+
+  React.useEffect(() => {
+    api
+      .harnessProfiles()
+      .then(setProfiles)
+      .catch(() => setProfiles([]));
+  }, []);
+
+  async function change(value: string) {
+    const id = value === "" ? null : Number(value);
+    setBusy(true);
+    setErr("");
+    try {
+      await api.attachTaskHarness(taskId, id);
+      setSelected(id);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const active = profiles.find((p) => p.id === selected) ?? null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <TerminalIcon className="size-4 text-blue-500" /> Execution backend
+        </CardTitle>
+        <CardDescription>
+          Run this task&apos;s workers on an external agentic CLI instead of the built-in loop. The CLI is governed
+          through the BARTEX Tools MCP server and sandbox-confined. Manage profiles under System → Harness.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <NativeSelect
+            className="max-w-xs"
+            value={selected == null ? "" : String(selected)}
+            disabled={busy}
+            onChange={(e) => void change(e.target.value)}
+          >
+            <NativeSelectOption value="">Built-in loop (default)</NativeSelectOption>
+            {profiles.map((p) => (
+              <NativeSelectOption key={p.id} value={String(p.id)}>
+                {p.name} ({p.kind})
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          {active ? (
+            <span className="font-mono text-xs text-muted-foreground">
+              {active.command} · MCP {active.mcp_transport}
+              {active.daybreak ? " · daybreak" : ""}
+            </span>
+          ) : null}
+        </div>
+        {err ? <p className="text-xs text-destructive">{err}</p> : null}
+        {profiles.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No harness profiles configured yet.</p>
+        ) : null}
       </CardContent>
     </Card>
   );

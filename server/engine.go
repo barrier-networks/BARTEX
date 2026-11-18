@@ -156,6 +156,10 @@ type Engine struct {
 	// (for example an exhausted failover chain) — there is no global-pair fallback.
 	resolve              func(t *Task) (*agent.Planner, *agent.Worker)
 	resolveAuthoritative bool
+	// harnessRun executes one intent on an external-harness backend instead of the
+	// built-in worker. Wired by the server; nil (or a task with no harness profile)
+	// means the built-in loop runs, unchanged.
+	harnessRun func(ctx context.Context, t *Task, name string, intent *db.Node, emit func(db.Activity)) (harness.TerminalReason, agent.WriteCounts, error)
 	// readiness reports whether a global LLM provider is configured — the signal behind
 	// Ready()/the llm_configured indicator. Wired once at startup; nil → not ready.
 	readiness func() bool
@@ -781,6 +785,13 @@ func (e *Engine) SetReadiness(fn func() bool) { e.readiness = fn }
 
 // SetAgentResolver installs a per-task planner/worker resolver (wired by the server).
 // Called once at startup before any task loop runs, so no lock is needed on reads.
+// SetHarnessRunner wires the external-harness backend. When set, an intent on a
+// task that selected a harness profile runs through fn instead of the built-in
+// worker.
+func (e *Engine) SetHarnessRunner(fn func(ctx context.Context, t *Task, name string, intent *db.Node, emit func(db.Activity)) (harness.TerminalReason, agent.WriteCounts, error)) {
+	e.harnessRun = fn
+}
+
 func (e *Engine) SetAgentResolver(fn func(t *Task) (*agent.Planner, *agent.Worker)) {
 	e.resolve = fn
 	e.resolveAuthoritative = false
@@ -1236,9 +1247,17 @@ func (e *Engine) runIntent(ctx context.Context, t *Task, name string, worker *ag
 	var reason harness.TerminalReason
 	var wrote agent.WriteCounts
 	var err error
-	if hasChatMessage {
+	// External-harness backend: a task with a harness profile runs its intents on
+	// the configured CLI instead of the built-in worker. The CLI drives the
+	// governed MCP catalog and is sandbox-confined; it manages its own retries, so
+	// the model_error rerun loop below is skipped for it.
+	useHarness := t.HarnessProfileID != nil && e.harnessRun != nil
+	switch {
+	case useHarness:
+		reason, wrote, err = e.harnessRun(workCtx, t, name, intent, emit)
+	case hasChatMessage:
 		reason, wrote, err = worker.ExecuteWithMessage(workCtx, name, wTaskID, e.m.assets, t.Store, intent, hooks, emit, e.m.enrich, t.NotifyFinding, requestID, message)
-	} else {
+	default:
 		reason, wrote, err = worker.Execute(workCtx, name, wTaskID, e.m.assets, t.Store, intent, hooks, emit, e.m.enrich, t.NotifyFinding)
 	}
 	e.EndLLMCall(t.ID)
@@ -1246,7 +1265,7 @@ func (e *Engine) runIntent(ctx context.Context, t *Task, name string, worker *ag
 	// the intent still belongs to this work and the task is not paused/killed/cancelled
 	// [and has not entered settlement]; otherwise yield to the matching branch (no retries during settlement, so backoff does not eat into other workers' graceful-settlement window).
 	maxRetries, retryBackoff := e.modelErrorRetryPolicy()
-	for attempt := 1; attempt <= maxRetries &&
+	for attempt := 1; attempt <= maxRetries && !useHarness &&
 		retryableWorkerModelError(reason, err) &&
 		workCtx.Err() == nil && ectx.Err() == nil && !e.IsPaused(t.ID) && !e.isSettling(t.ID); attempt++ {
 		log.Printf("[worker %s] task %s intent #%d finished with model_error, retrying after %v (%d/%d)",

@@ -52,6 +52,14 @@ func run() int {
 	// their BARTEX_* equivalents before anything reads the environment.
 	config.ApplyLegacyEnv()
 
+	// Subcommands run before flag parsing and return without starting the backend.
+	// `bartex mcp-stdio` is the stdio↔HTTP MCP bridge an external harness spawns
+	// when it speaks MCP only over stdio; it forwards to the governed /api/mcp
+	// endpoint using BARTEX_MCP_ENDPOINT + BARTEX_MCP_TOKEN.
+	if len(os.Args) > 1 && os.Args[1] == "mcp-stdio" {
+		return runMCPStdio()
+	}
+
 	var (
 		addr    = flag.String("addr", "127.0.0.1:8787", "HTTP listen address")
 		dataDir = flag.String("data", filepath.Join(config.BaseDir(), "data"), "runtime data directory: traffic index, task files, transcripts (default: data/ next to the executable)")
@@ -114,6 +122,10 @@ func run() int {
 		log.Printf("[config] trusted proxies: %v", trusted)
 	}
 	srv := server.New(ctx, mgr, skillDir, *dataDir, keyDir, server.WithSecretScrub(), server.WithTrustedProxies(trusted))
+	// Tell the server its own loopback base URL so the external-harness launcher
+	// can point a CLI at the governed MCP endpoint. A bind address like ":8787"
+	// or "0.0.0.0:8787" is reached over loopback from a sandboxed subprocess.
+	srv.SetSelfBaseURL("http://" + loopbackHostPort(*addr))
 	// ReadTimeout bounds how long the request headers and body may take to arrive.
 	// It does not limit how long a handler runs, so an event stream stays open.
 	// WriteTimeout is left unset: a write deadline would cut that stream.

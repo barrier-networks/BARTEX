@@ -31,9 +31,12 @@ type Task struct {
 	LLMProfileIDs      []int64 `json:"llm_profile_ids,omitempty"`
 	ReadyLLMProfileIDs []int64 `json:"-"`
 	ActiveLLMProfileID *int64  `json:"active_llm_profile_id,omitempty"`
-	LLMChainRevision   int64   `json:"-"`
-	LLMFailoverState   string  `json:"llm_failover_state,omitempty"`
-	LLMFailoverReason  string  `json:"llm_failover_reason,omitempty"`
+	// HarnessProfileID selects an external-harness execution backend for this
+	// task's workers. NULL = the built-in norma/agentcore loop (unchanged).
+	HarnessProfileID  *int64 `json:"harness_profile_id,omitempty"`
+	LLMChainRevision  int64  `json:"-"`
+	LLMFailoverState  string `json:"llm_failover_state,omitempty"`
+	LLMFailoverReason string `json:"llm_failover_reason,omitempty"`
 	// LLMRotate: per-intent chain-head rotation switch (#85); false = classic
 	// ordered failover from the active head.
 	LLMRotate     bool       `json:"llm_rotate"`
@@ -390,15 +393,22 @@ func insertTaskLLMProfiles(tx *sql.Tx, taskID int64, profileIDs []int64) error {
 
 const taskCols = `id, COALESCE(name,''), category_id,
 COALESCE((SELECT category.name FROM task_categories category WHERE category.id=tasks.category_id),''),
-description, goal, exploration_id, status, paused, queued, queued_at, COALESCE(queue_mode,''), llm_profile_id, active_llm_profile_id, COALESCE(parent_ref,''), pinned_at, created_at, completed_at, COALESCE(timeout_seconds,0), COALESCE(plan_heartbeat_seconds,300), COALESCE(plan_quiet_mode,true), COALESCE(coverage_enabled,true), COALESCE(llm_rotate,false), first_run_at, deadline_at, target_gate, engagement_id`
+description, goal, exploration_id, status, paused, queued, queued_at, COALESCE(queue_mode,''), llm_profile_id, active_llm_profile_id, COALESCE(parent_ref,''), pinned_at, created_at, completed_at, COALESCE(timeout_seconds,0), COALESCE(plan_heartbeat_seconds,300), COALESCE(plan_quiet_mode,true), COALESCE(coverage_enabled,true), COALESCE(llm_rotate,false), first_run_at, deadline_at, target_gate, engagement_id, harness_profile_id`
 
 func scanTask(sc interface{ Scan(...any) error }) (*Task, error) {
 	var t Task
-	if err := sc.Scan(&t.ID, &t.Name, &t.CategoryID, &t.CategoryName, &t.Description, &t.Goal, &t.ExplorationID, &t.Status, &t.Paused, &t.Queued, &t.QueuedAt, &t.QueueMode, &t.LLMProfileID, &t.ActiveLLMProfileID, &t.ParentRef, &t.PinnedAt, &t.CreatedAt, &t.CompletedAt, &t.TimeoutSeconds, &t.PlanHeartbeatSeconds, &t.PlanQuietMode, &t.CoverageEnabled, &t.LLMRotate, &t.FirstRunAt, &t.DeadlineAt, &t.TargetGate, &t.EngagementID); err != nil {
+	if err := sc.Scan(&t.ID, &t.Name, &t.CategoryID, &t.CategoryName, &t.Description, &t.Goal, &t.ExplorationID, &t.Status, &t.Paused, &t.Queued, &t.QueuedAt, &t.QueueMode, &t.LLMProfileID, &t.ActiveLLMProfileID, &t.ParentRef, &t.PinnedAt, &t.CreatedAt, &t.CompletedAt, &t.TimeoutSeconds, &t.PlanHeartbeatSeconds, &t.PlanQuietMode, &t.CoverageEnabled, &t.LLMRotate, &t.FirstRunAt, &t.DeadlineAt, &t.TargetGate, &t.EngagementID, &t.HarnessProfileID); err != nil {
 		return nil, err
 	}
 	t.Pinned = t.PinnedAt != nil
 	return &t, nil
+}
+
+// SetTaskHarnessProfile selects (or clears, with nil) the external-harness
+// execution backend for a task. A missing profile id is rejected by the FK.
+func (d *DB) SetTaskHarnessProfile(id int64, profileID *int64) error {
+	_, err := d.Exec(`UPDATE tasks SET harness_profile_id=$2 WHERE id=$1 AND deleted_at IS NULL`, id, profileID)
+	return err
 }
 
 // SetParentRef records a task's parent task id (orchestration agent spawn_task association).
