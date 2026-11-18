@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Barrier update script: (1) Docker update (rebuild the image from this checkout)  (2) local build update (rebuild the binary)
+# BARTEX update script: (1) Docker update (rebuild the image from this checkout)  (2) local build update (rebuild the binary)
 # Counterpart of install.sh: install handles the first-time setup, update upgrades to a new version.
-# No manual DB migration needed — barrier idempotently re-runs schema.sql on every start (with ADD COLUMN/CREATE
+# No manual DB migration needed — bartex idempotently re-runs schema.sql on every start (with ADD COLUMN/CREATE
 # INDEX IF NOT EXISTS), so "restart equals migrate". Data (pgdata volume, ./data, ./skills) is not affected.
 set -euo pipefail
 cd "$(cd "$(dirname "$0")" && pwd)"
@@ -36,15 +36,15 @@ update_docker(){
     || die "docker / docker compose not detected; install and deploy with ./install.sh first"
   [ -f .env ] || die ".env not found; run ./install.sh first to complete the initial deployment"
 
-  # Touch only barrier: postgres is pinned to 16-alpine and does not need upgrading along
-  # (pulling it wastes bandwidth, and a major version bump risks compatibility). barrier
+  # Touch only bartex: postgres is pinned to 16-alpine and does not need upgrading along
+  # (pulling it wastes bandwidth, and a major version bump risks compatibility). bartex
   # declares depends_on postgres, so an up with the service name starts pg if needed and leaves a running one untouched.
-  info "Building the image from this checkout (barrier only)…"
-  docker compose build barrier
-  info "Recreating barrier (schema migrates automatically on restart)…"
-  docker compose up -d barrier
+  info "Building the image from this checkout (bartex only)…"
+  docker compose build bartex
+  info "Recreating bartex (schema migrates automatically on restart)…"
+  docker compose up -d bartex
   ok "Update complete → http://localhost:8787"
-  info "View logs: docker compose logs -f barrier"
+  info "View logs: docker compose logs -f bartex"
   info "Clean up old images (optional): docker image prune -f"
 }
 
@@ -59,17 +59,17 @@ update_local(){
     ( cd web && npm ci && npm run build:static )
     rm -rf server/webui/dist && cp -r web/out server/webui/dist
     info "Recompiling the embedded single binary…"
-    CGO_ENABLED=0 go build -tags embedui -trimpath -o barrier ./cmd/barrier
+    CGO_ENABLED=0 go build -tags embedui -trimpath -o bartex ./cmd/bartex
   else
     warn "npm not detected: building a backend **without the embedded frontend** (run the frontend separately with npm run dev)"
-    CGO_ENABLED=0 go build -o barrier ./cmd/barrier
+    CGO_ENABLED=0 go build -o bartex ./cmd/bartex
   fi
-  ok "Build complete → ./barrier"
-  warn "Restart the running barrier process to take effect (schema migrates automatically on restart)"
+  ok "Build complete → ./bartex"
+  warn "Restart the running bartex process to take effect (schema migrates automatically on restart)"
 }
 
 echo "=============================="
-echo "  Barrier Update"
+echo "  BARTEX Update"
 echo "  1) Docker update (pull new image and rebuild)"
 echo "  2) Local update (rebuild with go)"
 echo "=============================="

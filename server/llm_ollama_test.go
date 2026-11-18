@@ -233,13 +233,13 @@ func TestOllamaListModels(t *testing.T) {
 	}
 }
 
-// The environment path must normalize the base URL too: BARRIER_LLM_BASE_URL is
+// The environment path must normalize the base URL too: BARTEX_LLM_BASE_URL is
 // the natural way to configure a LAN Ollama server, and it used to send chat to
 // /chat/completions instead of /v1/chat/completions.
 func TestOllamaFromEnvNormalizesBaseURL(t *testing.T) {
-	t.Setenv("BARRIER_LLM_PROVIDER", "ollama")
+	t.Setenv("BARTEX_LLM_PROVIDER", "ollama")
 	t.Setenv("OPENAI_API_KEY", "")
-	t.Setenv("BARRIER_LLM_BASE_URL", "http://box:11434")
+	t.Setenv("BARTEX_LLM_BASE_URL", "http://box:11434")
 	c, ok := agent.FromEnv()
 	if !ok {
 		t.Fatal("ollama env config must be usable")
@@ -247,7 +247,7 @@ func TestOllamaFromEnvNormalizesBaseURL(t *testing.T) {
 	if c.BaseURL != "http://box:11434/v1" {
 		t.Fatalf("env base URL not normalized: %q", c.BaseURL)
 	}
-	t.Setenv("BARRIER_LLM_BASE_URL", "http://box:11434/v1/chat/completions")
+	t.Setenv("BARTEX_LLM_BASE_URL", "http://box:11434/v1/chat/completions")
 	c, ok = agent.FromEnv()
 	if !ok {
 		t.Fatal("ollama env config must be usable")
@@ -261,9 +261,9 @@ func TestOllamaFromEnvNormalizesBaseURL(t *testing.T) {
 // Ollama ignores the bearer token, so inheritance would only ship the cloud key
 // to the local or LAN endpoint.
 func TestOllamaFromEnvDoesNotInheritOpenAIKey(t *testing.T) {
-	t.Setenv("BARRIER_LLM_PROVIDER", "ollama")
+	t.Setenv("BARTEX_LLM_PROVIDER", "ollama")
 	t.Setenv("OPENAI_API_KEY", "sk-cloud-secret")
-	t.Setenv("BARRIER_LLM_BASE_URL", "")
+	t.Setenv("BARTEX_LLM_BASE_URL", "")
 	c, ok := agent.FromEnv()
 	if !ok {
 		t.Fatal("ollama env config must be usable without a key")

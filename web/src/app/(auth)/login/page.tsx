@@ -68,7 +68,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const { token } = await api.login("Barrier", password);
+      const { token } = await api.login("BARTEX", password);
       auth.setToken(token);
       window.location.replace("/function/tasks");
     } catch {
@@ -109,7 +109,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" value="Barrier" readOnly className="bg-muted text-muted-foreground" />
+              <Input id="username" value="BARTEX" readOnly className="bg-muted text-muted-foreground" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>

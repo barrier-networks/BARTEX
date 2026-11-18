@@ -12,4 +12,4 @@
 
 ## Security
 
-- Do not open a public issue for a vulnerability in Barrier itself. Use the private advisory form in the repository's Security tab.
+- Do not open a public issue for a vulnerability in BARTEX itself. Use the private advisory form in the repository's Security tab.

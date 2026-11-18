@@ -346,7 +346,7 @@ export default function NotifyPage() {
             <Label htmlFor="n-base">Link-back URL</Label>
             <Input
               id="n-base"
-              placeholder="https://barrier.example.com"
+              placeholder="https://bartex.example.com"
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
             />

@@ -258,12 +258,12 @@ func TestUserAgentAndEnv(t *testing.T) {
 	if p := ProfileFromEnv(); p.RPS != 0 || p.Name != "off" {
 		t.Fatalf("default profile: %+v, want off", p)
 	}
-	t.Setenv("BARRIER_NOISE_PROFILE", "Balanced")
-	t.Setenv("BARRIER_TARGET_USER_AGENT", "x/1")
+	t.Setenv("BARTEX_NOISE_PROFILE", "Balanced")
+	t.Setenv("BARTEX_TARGET_USER_AGENT", "x/1")
 	if p := ProfileFromEnv(); p.Name != "balanced" || p.RPS != 5 || p.UserAgent != "x/1" {
 		t.Fatalf("balanced from env: %+v", p)
 	}
-	t.Setenv("BARRIER_NOISE_PROFILE", "loud")
+	t.Setenv("BARTEX_NOISE_PROFILE", "loud")
 	if p := ProfileFromEnv(); p.RPS != 0 {
 		t.Fatalf("unknown profile: %+v, want off", p)
 	}

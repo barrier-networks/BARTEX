@@ -30,7 +30,7 @@ import (
 const (
 	secretPrefix  = "enc:v1:"
 	sealedJSONKey = "__artex_enc"
-	secretKeyEnv  = "BARRIER_SECRET_KEY"
+	secretKeyEnv  = "BARTEX_SECRET_KEY"
 	secretKeyFile = "secret.key"
 )
 

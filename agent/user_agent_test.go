@@ -32,7 +32,7 @@ func serveUA(t *testing.T, userAgent string) string {
 }
 
 func TestUserAgentHeaderSetWhenConfigured(t *testing.T) {
-	const want = "barrier-test-agent/1.2.3"
+	const want = "bartex-test-agent/1.2.3"
 	if got := serveUA(t, want); got != want {
 		t.Fatalf("User-Agent = %q, want %q", got, want)
 	}

@@ -17,7 +17,7 @@ const maxBodyBytes = 1 << 20
 
 // SessionBinder resolves an inbound bearer token to the Toolset for that session,
 // or returns ok=false to reject the request. The live server binds a token to a
-// Barrier task (and its engagement/scope) and returns a GuardedToolset, so every
+// BARTEX task (and its engagement/scope) and returns a GuardedToolset, so every
 // tool call is governed for that task. A binder MUST compare tokens in constant
 // time.
 type SessionBinder func(token string) (Toolset, bool)

@@ -287,5 +287,5 @@ func EngagementBlockMessage(res TargetResult) string {
 			reason = "target " + target + ": " + reason
 		}
 	}
-	return "[Barrier platform control, not target defense] " + res.Code + ": " + reason + ". " + engagementGuidance[res.Code]
+	return "[BARTEX platform control, not target defense] " + res.Code + ": " + reason + ". " + engagementGuidance[res.Code]
 }

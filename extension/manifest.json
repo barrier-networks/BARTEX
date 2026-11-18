@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Barrier Traffic Capture",
+  "name": "BARTEX Traffic Capture",
   "version": "1.0.0",
-  "description": "Capture the current tab's network traffic into your local Barrier instance, so operator-driven authenticated browsing becomes agent-visible evidence.",
+  "description": "Capture the current tab's network traffic into your local BARTEX instance, so operator-driven authenticated browsing becomes agent-visible evidence.",
   "permissions": ["debugger", "storage", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html", "default_title": "Barrier Traffic Capture" }
+  "action": { "default_popup": "popup.html", "default_title": "BARTEX Traffic Capture" }
 }

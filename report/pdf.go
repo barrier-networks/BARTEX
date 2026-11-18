@@ -15,11 +15,11 @@ import (
 // can still serve the HTML report, which needs no browser).
 var ErrNoBrowser = errors.New("no Chromium binary found for PDF rendering")
 
-// chromiumCandidates are searched in order. BARRIER_CHROMIUM wins; the container
+// chromiumCandidates are searched in order. BARTEX_CHROMIUM wins; the container
 // image ships a preinstalled Chromium under /opt/pw-browsers.
 func chromiumCandidates() []string {
 	var c []string
-	if env := os.Getenv("BARRIER_CHROMIUM"); env != "" {
+	if env := os.Getenv("BARTEX_CHROMIUM"); env != "" {
 		c = append(c, env)
 	}
 	c = append(c, "/opt/pw-browsers/chromium")
@@ -48,7 +48,7 @@ func RenderPDF(ctx context.Context, html []byte) ([]byte, error) {
 	if !ok {
 		return nil, ErrNoBrowser
 	}
-	dir, err := os.MkdirTemp("", "barrier-report-")
+	dir, err := os.MkdirTemp("", "bartex-report-")
 	if err != nil {
 		return nil, err
 	}

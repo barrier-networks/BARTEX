@@ -3,8 +3,15 @@ package server
 import "os"
 
 // secretEnv lists the credentials read from the environment only at startup:
-// BARRIER_PG_DSN and BARRIER_SECRET_KEY by NewManager, the API keys by agent.FromEnv inside New.
-var secretEnv = []string{"BARRIER_PG_DSN", "BARRIER_SECRET_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"}
+// BARTEX_PG_DSN and BARTEX_SECRET_KEY by NewManager, the API keys by agent.FromEnv inside New.
+// The legacy BARRIER_* / ARTEX_* spellings are listed too: config.ApplyLegacyEnv
+// mirrors them to BARTEX_* without clearing the originals.
+var secretEnv = []string{
+	"BARTEX_PG_DSN", "BARTEX_SECRET_KEY",
+	"BARRIER_PG_DSN", "BARRIER_SECRET_KEY",
+	"ARTEX_PG_DSN", "ARTEX_SECRET_KEY",
+	"ANTHROPIC_API_KEY", "OPENAI_API_KEY",
+}
 
 // ScrubSecretEnv removes secretEnv from the process environment once startup has
 // read it. Child processes (agent shells, custom tools, MCP stdio servers) copy
@@ -22,7 +29,7 @@ func ScrubSecretEnv() {
 
 // Option configures New. Options keep the test call sites unchanged: only the
 // binary opts into scrubbing, because tests create several servers in one
-// process and still need BARRIER_PG_DSN on later calls.
+// process and still need BARTEX_PG_DSN on later calls.
 type Option func(*Server)
 
 // WithSecretScrub makes New drop the startup secrets after reading them, before

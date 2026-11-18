@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
-// The update check is opt-in: only BARRIER_UPDATE_CHECK=1 (or true/on/yes) lets
-// the backend ask the public GitHub releases API for the latest Barrier tag.
+// The update check is opt-in: only BARTEX_UPDATE_CHECK=1 (or true/on/yes) lets
+// the backend ask the public GitHub releases API for the latest BARTEX tag.
 // Unset, it makes no request at all and the UI shows no banner.
 const updateCheckURL = "https://api.github.com/repos/barrier-networks/bartex/releases/latest"
 const updateCheckInterval = 24 * time.Hour
 
 func updateCheckEnabled() bool {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv("BARRIER_UPDATE_CHECK"))) {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("BARTEX_UPDATE_CHECK"))) {
 	case "1", "true", "on", "yes":
 		return true
 	}
@@ -66,7 +66,7 @@ func fetchLatestRelease(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "barrier-update-check")
+	req.Header.Set("User-Agent", "bartex-update-check")
 	req.Header.Set("Accept", "application/vnd.github+json")
 	resp, err := (&http.Client{Timeout: 5 * time.Second}).Do(req)
 	if err != nil {

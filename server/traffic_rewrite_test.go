@@ -482,7 +482,7 @@ func TestRewriteRulesLoadedAtStartup(t *testing.T) {
 	}
 
 	// Not the key that sealed the rule.
-	t.Setenv("BARRIER_SECRET_KEY", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("f", 32))))
+	t.Setenv("BARTEX_SECRET_KEY", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("f", 32))))
 	if m2, err := NewManager(t.TempDir(), ""); err == nil {
 		m2.Close()
 		t.Fatal("NewManager started under a key that cannot open the stored rules")

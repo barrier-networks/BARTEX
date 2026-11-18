@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backup the Barrier database (and optionally the data directory) with rotation.
+# Backup the BARTEX database (and optionally the data directory) with rotation.
 #
 # Usage:
 #   scripts/backup.sh [--with-data] [--keep N] [--output-dir DIR]
@@ -12,7 +12,7 @@
 #
 # The database dump runs inside the postgres compose service, so no psql client
 # is needed on the host. Restore:
-#   gunzip -c backups/barrier-db-<ts>.sql.gz | docker compose exec -T postgres \
+#   gunzip -c backups/bartex-db-<ts>.sql.gz | docker compose exec -T postgres \
 #     psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -42,12 +42,12 @@ if [ -f .env ]; then
   . ./.env
   set +a
 fi
-PGUSER_NAME="${POSTGRES_USER:-barrier}"
-PGDATABASE_NAME="${POSTGRES_DB:-barrier}"
+PGUSER_NAME="${POSTGRES_USER:-bartex}"
+PGDATABASE_NAME="${POSTGRES_DB:-bartex}"
 
 mkdir -p "$OUTPUT_DIR"
 TS=$(date -u +%Y%m%dT%H%M%SZ)
-DB_OUT="$OUTPUT_DIR/barrier-db-$TS.sql.gz"
+DB_OUT="$OUTPUT_DIR/bartex-db-$TS.sql.gz"
 if [ -e "$DB_OUT" ]; then
   echo "refusing to overwrite $DB_OUT" >&2
   exit 1
@@ -62,7 +62,7 @@ gzip -t "$DB_OUT"
 echo "wrote $DB_OUT ($(du -h "$DB_OUT" | cut -f1))"
 
 if [ "$WITH_DATA" -eq 1 ]; then
-  DATA_OUT="$OUTPUT_DIR/barrier-data-$TS.tar.gz"
+  DATA_OUT="$OUTPUT_DIR/bartex-data-$TS.tar.gz"
   # data/ contains files written by the container (root); unreadable ones make
   # tar exit 2. Fail loudly rather than ship a partial archive.
   if ! tar -czf "$DATA_OUT" data 2>"$OUTPUT_DIR/.tar.err"; then
@@ -82,6 +82,6 @@ prune() {
     rm -f "$old"
   done
 }
-prune 'barrier-db-*.sql.gz'
-[ "$WITH_DATA" -eq 1 ] && prune 'barrier-data-*.tar.gz'
+prune 'bartex-db-*.sql.gz'
+[ "$WITH_DATA" -eq 1 ] && prune 'bartex-data-*.tar.gz'
 echo "backup complete ($KEEP newest kept)"

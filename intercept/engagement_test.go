@@ -171,7 +171,7 @@ func TestEngagementNilPolicyPasses(t *testing.T) {
 func TestEngagementBlockMessage(t *testing.T) {
 	res := active([]EngagementNet{domainNet("example.net")}, nil).CheckEngagement("WebFetch", []byte(webApp))
 	msg := EngagementBlockMessage(res)
-	if !strings.HasPrefix(msg, "[Barrier platform control, not target defense] "+EngagementOutOfScope+": ") {
+	if !strings.HasPrefix(msg, "[BARTEX platform control, not target defense] "+EngagementOutOfScope+": ") {
 		t.Fatalf("missing framing: %q", msg)
 	}
 	for _, want := range []string{"app.example.com", "authorised scope", "Do not reach it"} {
@@ -179,7 +179,7 @@ func TestEngagementBlockMessage(t *testing.T) {
 			t.Fatalf("message %q missing %q", msg, want)
 		}
 	}
-	if strings.Contains(msg, "ARTEX") {
+	if strings.Contains(msg, "[ARTEX") {
 		t.Fatalf("stale ARTEX framing: %q", msg)
 	}
 }

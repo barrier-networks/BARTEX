@@ -146,7 +146,7 @@ func emailCfg(t *testing.T, f *fakeSMTP, extra map[string]any) map[string]any {
 	cfg := map[string]any{
 		"host": host,
 		"port": float64(port),
-		"from": "barrier@example.com",
+		"from": "bartex@example.com",
 		"to":   []any{"a@example.com", "b@example.com"},
 	}
 	for k, v := range extra {
@@ -158,13 +158,13 @@ func emailCfg(t *testing.T, f *fakeSMTP, extra map[string]any) map[string]any {
 func TestEmailSendDeliversFullMessage(t *testing.T) {
 	f := newFakeSMTP(t)
 	f.advertiseAuth = true
-	cfg := emailCfg(t, f, map[string]any{"username": "barrier", "password": "pw"})
+	cfg := emailCfg(t, f, map[string]any{"username": "bartex", "password": "pw"})
 
 	if _, err := (emailChannel{}).Send(context.Background(), cfg, singleMsg()); err != nil {
 		t.Fatalf("delivery failed: %v", err)
 	}
 	// The envelope stages must all happen: sender, both recipients, DATA.
-	for _, want := range []string{"MAIL FROM:<barrier@example.com>", "RCPT TO:<a@example.com>", "RCPT TO:<b@example.com>", "DATA", "AUTH", "QUIT"} {
+	for _, want := range []string{"MAIL FROM:<bartex@example.com>", "RCPT TO:<a@example.com>", "RCPT TO:<b@example.com>", "DATA", "AUTH", "QUIT"} {
 		if !f.sawCommand(want) {
 			t.Errorf("SMTP session missing %q, actual commands: %v", want, f.commands)
 		}
@@ -249,7 +249,7 @@ func TestEmailSendRefusesPlaintextCredentials(t *testing.T) {
 		"port":     float64(port),
 		"from":     "a@example.com",
 		"to":       []any{"b@example.com"},
-		"username": "barrier",
+		"username": "bartex",
 		"password": "pw",
 	}
 	_, err := (emailChannel{}).Send(context.Background(), cfg, singleMsg())

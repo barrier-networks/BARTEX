@@ -73,7 +73,7 @@ const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434/v1";
 
 // Quick presets that prefill format + base URL for common local, self-hosted and
 // OpenAI-compatible endpoints. They only set defaults; every field stays editable.
-// A local gateway (e.g. LiteLLM) lets Barrier reach the same models an agent CLI
+// A local gateway (e.g. LiteLLM) lets BARTEX reach the same models an agent CLI
 // (Claude Code, Codex, Aider, …) uses — one endpoint fronting cloud + local.
 type ProviderPreset = { label: string; format: ProfileFormat; baseUrl: string; model?: string };
 const PROVIDER_PRESETS: { group: string; items: ProviderPreset[] }[] = [

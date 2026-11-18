@@ -20,9 +20,9 @@ import (
 
 func evidenceFixture(t *testing.T) (*Store, db.RecordFindingInput, string) {
 	t.Helper()
-	dsn := os.Getenv("BARRIER_PG_DSN")
+	dsn := os.Getenv("BARTEX_PG_DSN")
 	if dsn == "" {
-		t.Skip("BARRIER_PG_DSN is required for evidence integration tests")
+		t.Skip("BARTEX_PG_DSN is required for evidence integration tests")
 	}
 	pg, err := db.Open(dsn)
 	if err != nil {

@@ -1,12 +1,12 @@
 #!/bin/sh
-# Barrier supervisor start script (Linux / macOS / Docker ENTRYPOINT)
+# BARTEX supervisor start script (Linux / macOS / Docker ENTRYPOINT)
 #
 # Usage:
 #   ./start.sh                       run in the foreground (Ctrl-C to stop)
-#   nohup ./start.sh >barrier.log 2>&1 &   run persistently in the background
-#   ./start.sh -addr :9000           extra arguments are passed through to barrier as-is
+#   nohup ./start.sh >bartex.log 2>&1 &   run persistently in the background
+#   ./start.sh -addr :9000           extra arguments are passed through to bartex as-is
 #
-# It does exactly one thing: run barrier and, once the process exits, decide by exit code whether to relaunch it.
+# It does exactly one thing: run bartex and, once the process exits, decide by exit code whether to relaunch it.
 #
 #   0      user stopped normally  -> exit the loop
 #   other  crash               -> rerun after backoff (1→2→4... up to 60 seconds)
@@ -14,18 +14,18 @@ set -u
 
 cd "$(dirname "$0")" || exit 1
 
-BIN=./barrier
-[ -x "$BIN" ] || { echo "[barrier] executable $BIN not found" >&2; exit 1; }
+BIN=./bartex
+[ -x "$BIN" ] || { echo "[bartex] executable $BIN not found" >&2; exit 1; }
 
 MAX_DELAY=60
 
 child=0
 stopping=0
 
-# Forward stop signals to barrier itself.
+# Forward stop signals to bartex itself.
 #
 # Under Docker this is required: docker stop sends SIGTERM only to PID 1 (this script),
-# never to the child. Without forwarding, barrier never sees the signal and cannot shut down gracefully; after 10 seconds it gets
+# never to the child. Without forwarding, bartex never sees the signal and cannot shut down gracefully; after 10 seconds it gets
 # hard-killed by SIGKILL and any running task is cut off mid-flight.
 forward() {
 	stopping=1
@@ -51,17 +51,17 @@ while :; do
 	child=0
 
 	if [ "$stopping" -eq 1 ]; then
-		echo "[barrier] stopped"
+		echo "[bartex] stopped"
 		exit 0
 	fi
 
 	case "$code" in
 		0)
-			echo "[barrier] exited normally"
+			echo "[bartex] exited normally"
 			exit 0
 			;;
 		*)
-			echo "[barrier] abnormal exit (code=$code), restarting in ${delay}s" >&2
+			echo "[bartex] abnormal exit (code=$code), restarting in ${delay}s" >&2
 			sleep "$delay"
 			delay=$((delay * 2))
 			[ "$delay" -gt "$MAX_DELAY" ] && delay=$MAX_DELAY

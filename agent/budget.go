@@ -81,15 +81,15 @@ func addUsage(s Spend, u llm.Usage) Spend {
 	return Spend{s.Tokens + int64(u.InputTokens+u.OutputTokens), s.Turns + 1}
 }
 
-// BudgetsFromEnv reads BARRIER_TASK_BUDGET_{TOKENS,TURNS} and
-// BARRIER_INTENT_BUDGET_{TOKENS,TURNS}. Unset, 0 or invalid = Unlimited.
+// BudgetsFromEnv reads BARTEX_TASK_BUDGET_{TOKENS,TURNS} and
+// BARTEX_INTENT_BUDGET_{TOKENS,TURNS}. Unset, 0 or invalid = Unlimited.
 func BudgetsFromEnv() (task, intent Budget) {
 	env := func(k string) int64 {
 		n, _ := strconv.ParseInt(strings.TrimSpace(os.Getenv(k)), 10, 64)
 		return n
 	}
-	return NewBudget(env("BARRIER_TASK_BUDGET_TOKENS"), env("BARRIER_TASK_BUDGET_TURNS")),
-		NewBudget(env("BARRIER_INTENT_BUDGET_TOKENS"), env("BARRIER_INTENT_BUDGET_TURNS"))
+	return NewBudget(env("BARTEX_TASK_BUDGET_TOKENS"), env("BARTEX_TASK_BUDGET_TURNS")),
+		NewBudget(env("BARTEX_INTENT_BUDGET_TOKENS"), env("BARTEX_INTENT_BUDGET_TURNS"))
 }
 
 // BudgetLedger meters one task. The total is restored from llm_usage when the
