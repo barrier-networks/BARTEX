@@ -203,6 +203,14 @@ These serve as the fallback; there is no separate default.css file. */
   --chart-5: #e6b053;            /* Amber, lifted */
 }
 
+/* Centri signature: the native Cobalt -> Deep linear gradient. */
+:root {
+  --brand-gradient: linear-gradient(135deg, #0a45a3 0%, #03122b 100%);
+}
+.bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

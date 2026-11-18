@@ -61,8 +61,15 @@ engineering audience picking the work up.
     `#A73030`** error, **Amber `#855400`** warning.
   - Typeface stack **Aptos → Calibri → Segoe UI → Arial** (Inter was explicitly
     review-only in the guidelines, not the brand face). Mono: Cascadia/Consolas.
-- Logo: a self-coloured Cobalt SVG (`web/public/logo.svg`, shield + ascending
-  bars) + regenerated raster; login/setup/sidebar reference the vector.
+- **Sub-brand: the platform carries Centri.** Per the guidelines, Centri rides
+  the core Cobalt/Deep system (no distinct accent hue; its signature is the
+  native Cobalt→Deep linear gradient and the gradient-oval mark). Applied:
+  product name/title → **Centri** (`app-config`, login, setup, sidebar; the
+  operator *username* stays `Barrier`), a Cobalt→Deep **gradient-oval logo**
+  (`logo.svg` + raster, matching the brand's oval-with-outline-pair motif, not
+  the earlier shield), and the Centri **gradient** on the login/setup panels
+  (`--brand-gradient` / `.bg-brand-gradient`). The report shares the oval mark
+  under the Barrier Networks wordmark (it is a consultancy deliverable).
 - **Follow-up (🟡):** this is a geometric placeholder mark in brand Cobalt — the
   **official Barrier logo** should be exported from the brand file and dropped
   in (the Figma asset download was blocked by this environment's egress proxy),

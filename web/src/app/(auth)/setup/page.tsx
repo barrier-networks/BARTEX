@@ -63,13 +63,13 @@ export default function SetupPage() {
   return (
     <div className="flex h-dvh">
       {/* Left panel */}
-      <div className="hidden flex-col items-center justify-center bg-primary p-12 text-center lg:flex lg:w-1/3">
+      <div className="bg-brand-gradient hidden flex-col items-center justify-center p-12 text-center text-white lg:flex lg:w-1/3">
         <div className="relative flex items-center justify-center">
           <div className="absolute size-80 rounded-full border border-primary-foreground/10" />
           <div className="absolute size-60 rounded-full border border-primary-foreground/15" />
           <div className="absolute size-40 rounded-full border border-primary-foreground/20" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="Barrier" width={160} height={160} className="relative brightness-0 invert" />
+          <img src="/logo.svg" alt="Centri" width={160} height={160} className="relative brightness-0 invert" />
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export default function SetupPage() {
             <p className="mx-auto max-w-xl text-muted-foreground">
               {unavailable
                 ? "The backend or database is temporarily unavailable. To avoid overwriting a password already set on this instance, setup is temporarily closed — restore the service and try again."
-                : "First time using Barrier? Enter the setup token from the server log, then set a login password for the account (at least 12 characters)"}
+                : "First time using Centri? Enter the setup token from the server log, then set a login password for the account (at least 12 characters)"}
             </p>
           </div>
           {unavailable ? (

@@ -87,9 +87,14 @@ const clientReportHTML = `<!doctype html>
     <div class="classification">{{.Meta.Classification}}</div>
     <div class="brand" style="margin-top:40px">
       <svg class="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path fill="#0A45A3" fill-rule="evenodd" clip-rule="evenodd"
-          d="M32 3 L57 13 L57 31 C57 47 46 57.5 32 61.5 C18 57.5 7 47 7 31 L7 13 Z
-             M20 40 H25 V48 H20 Z M29.5 32 H34.5 V48 H29.5 Z M39 24 H44 V48 H39 Z"/>
+        <defs>
+          <linearGradient id="m" x1="6" y1="14" x2="58" y2="50" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#0A45A3"/><stop offset="1" stop-color="#03122B"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="32" cy="32" rx="29" ry="22" fill="none" stroke="#0A45A3" stroke-width="2.4"/>
+        <ellipse cx="32" cy="32" rx="24.5" ry="18" fill="none" stroke="#0A45A3" stroke-width="2.4"/>
+        <ellipse cx="32" cy="32" rx="17" ry="12" fill="url(#m)"/>
       </svg>
       <div class="name">BARRIER<span class="net"> NETWORKS</span></div>
     </div>
