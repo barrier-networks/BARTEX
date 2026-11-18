@@ -172,7 +172,7 @@ func (s *Server) mintTaskMCPToken(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 200, map[string]any{
 		"token":      tok,
-		"endpoint":   "/api/mcp",
+		"endpoint":   "/api/harness-mcp",
 		"expires_at": exp.Unix(),
 		"task_id":    t.ID,
 	})

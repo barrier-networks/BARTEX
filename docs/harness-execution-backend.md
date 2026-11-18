@@ -120,7 +120,7 @@ it **must not** run without Option B's sandbox.
     `WorkerTools()` to the MCP `Toolset`, running `CheckToolCall` before each
     call and executing the identical `CoreTool` on a pass (so assets / facts /
     findings write back exactly as for the built-in loop).
-  - **Endpoint + scope:** mounted at `/api/mcp`, outside the operator-JWT
+  - **Endpoint + scope:** mounted at `/api/harness-mcp`, outside the operator-JWT
     wrapper, authenticating on a task-scoped bearer token. The binder attaches
     the task's `targetScope(...)` to each call's context, so the target gate and
     the RoE engagement policy enforce pins / approvals / the engagement window.

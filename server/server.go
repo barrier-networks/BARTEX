@@ -58,7 +58,7 @@ type Server struct {
 	trustedProxies []netip.Prefix // BARTEX_TRUSTED_PROXIES; see clientIP
 
 	// mcpTokens scopes bearer tokens for the governed BARTEX Tools MCP server
-	// (/api/mcp): each token binds an external harness session to one task.
+	// (/api/harness-mcp): each token binds an external harness session to one task.
 	mcpTokens *mcpTokenStore
 
 	// concMu serializes concurrency-cap decisions (admission + reconcile) so a
@@ -1045,8 +1045,10 @@ func (s *Server) Handler() http.Handler {
 	root.Handle("/api/", api)
 	// The governed BARTEX Tools MCP server authenticates on its own task-scoped
 	// bearer token (the SessionBinder), so it is mounted outside the operator-JWT
-	// requireAuth wrapper. The more specific pattern wins over "/api/".
-	root.Handle("/api/mcp", s.mcpHandler())
+	// requireAuth wrapper. The more specific pattern wins over "/api/". It lives at
+	// /api/harness-mcp, NOT /api/mcp — the latter is the operator MCP-servers
+	// management API.
+	root.Handle("/api/harness-mcp", s.mcpHandler())
 	root.Handle("/", s.webuiHandler())
 	return limitRequestBody(root)
 }
