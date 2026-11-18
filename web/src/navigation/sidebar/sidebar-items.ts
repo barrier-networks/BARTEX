@@ -20,6 +20,7 @@ import {
   Sparkles,
   Target,
   Terminal,
+  TerminalSquare,
   Wrench,
 } from "lucide-react";
 
@@ -85,6 +86,7 @@ export const sidebarItems: NavGroup[] = [
       { id: "llm", title: "LLM", url: "/system/llm", icon: Brain },
       { id: "agents", title: "Agent", url: "/system/agents", icon: Bot },
       { id: "mcp", title: "MCP", url: "/system/mcp", icon: Plug },
+      { id: "harness", title: "Harness", url: "/system/harness", icon: TerminalSquare },
       { id: "skills", title: "Skill", url: "/system/skills", icon: Sparkles },
       { id: "tools", title: "Tools", url: "/system/tools", icon: Wrench },
       { id: "notify", title: "Notifications", url: "/system/notify", icon: BellRing },
