@@ -128,84 +128,84 @@ These serve as the fallback; there is no separate default.css file. */
 }
 
 /* =============================================================
-   Barrier brand palette — from the Barrier Brand Refinement
-   guidelines (Figma). Cobalt (#0A45A3) and Deep (#03122B) lead;
-   Glow (#38BAF5) accents on Deep only; slate neutrals support;
-   status hues are published-fixed (Jade #006951, Brick #A73030,
-   Amber #855400). Typeface: Aptos -> Calibri -> Arial (Inter was
-   review-only, not the brand face). Change brand colour here only —
-   nothing else hard-codes it.
+   AdversaryOps sub-brand palette — from the Barrier Brand
+   Refinement guidelines (Figma). AdversaryOps is the red-team
+   pillar: Red Glow (#ED4545) is the brand red, Red Deep (#170202)
+   leads dark surfaces, with a red gradient (Red Glow -> Red Deep).
+   Status hues stay published-fixed (Jade #006951 success, Brick
+   #A73030 error, Amber #855400). Typeface: Aptos -> Calibri ->
+   Arial. Change brand colour here only — nothing else hard-codes it.
    ============================================================= */
 :root {
   --font-sans: "Aptos", "Calibri", "Segoe UI", system-ui, Arial, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Consolas", "Courier New", monospace;
 
-  /* Light surfaces: Deep ink on white / subtle. */
-  --foreground: #03122b;         /* Deep */
-  --card-foreground: #03122b;
-  --popover-foreground: #03122b;
-  --primary: #0a45a3;            /* Cobalt — the action colour */
+  /* Light surfaces: Red Deep ink on white. */
+  --foreground: #170202;         /* Red Deep */
+  --card-foreground: #170202;
+  --popover-foreground: #170202;
+  --primary: #ed4545;            /* Red Glow — the AdversaryOps red */
   --primary-foreground: #ffffff;
-  --secondary: #f0f4fb;          /* Cobalt 50 */
-  --secondary-foreground: #03122b;
-  --muted: #f5f6f8;              /* surface subtle */
-  --muted-foreground: #596a83;   /* text secondary */
-  --accent: #f0f4fb;             /* Cobalt 50 hover surface */
-  --accent-foreground: #0a45a3;
+  --secondary: #fdecec;          /* red tint */
+  --secondary-foreground: #170202;
+  --muted: #f7f1f1;              /* warm subtle */
+  --muted-foreground: #6f5a5a;
+  --accent: #fdecec;             /* red tint hover surface */
+  --accent-foreground: #c01f1f;
   --destructive: #a73030;        /* Brick — published error hue */
-  --border: #e9ecf0;
-  --input: #e9ecf0;
-  --ring: #0a45a3;
-  --sidebar-primary: #0a45a3;
+  --border: #efe1e1;
+  --input: #efe1e1;
+  --ring: #ed4545;
+  --sidebar-primary: #ed4545;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f0f4fb;
-  --sidebar-accent-foreground: #0a45a3;
-  --sidebar-ring: #0a45a3;
-  --chart-1: #0a45a3;            /* Cobalt */
-  --chart-2: #38baf5;            /* Glow */
-  --chart-3: #4f7dc0;            /* Cobalt 400 */
+  --sidebar-accent: #fdecec;
+  --sidebar-accent-foreground: #c01f1f;
+  --sidebar-ring: #ed4545;
+  --chart-1: #ed4545;            /* Red Glow */
+  --chart-2: #a73030;            /* Brick */
+  --chart-3: #d98324;            /* amber-orange */
   --chart-4: #006951;            /* Jade */
-  --chart-5: #855400;            /* Amber */
+  --chart-5: #8a95a7;            /* slate */
 }
 
-/* Dark console: Deep leads, Cobalt action, Glow accent. */
+/* Dark console: Red Deep leads, Red Glow action. */
 .dark {
-  --background: #03122b;         /* Deep */
-  --foreground: #f5f6f8;
-  --card: #071d3d;               /* Deep, lifted */
-  --card-foreground: #f5f6f8;
-  --popover: #071d3d;
-  --popover-foreground: #f5f6f8;
-  --primary: #2f6fd0;            /* Cobalt lifted for contrast on Deep */
+  --background: #170202;         /* Red Deep */
+  --foreground: #f7eeee;
+  --card: #2a0a0a;               /* Red Deep, lifted */
+  --card-foreground: #f7eeee;
+  --popover: #2a0a0a;
+  --popover-foreground: #f7eeee;
+  --primary: #ed4545;            /* Red Glow */
   --primary-foreground: #ffffff;
-  --secondary: #11294c;
-  --secondary-foreground: #f5f6f8;
-  --muted: #11294c;
-  --muted-foreground: #8a95a7;   /* slate neutral */
-  --accent: #38baf5;             /* Glow — accent on Deep only */
-  --accent-foreground: #03122b;
+  --secondary: #351515;
+  --secondary-foreground: #f7eeee;
+  --muted: #351515;
+  --muted-foreground: #c7a6a6;   /* warm neutral */
+  --accent: #ed4545;             /* Red Glow accent */
+  --accent-foreground: #1a0303;
   --destructive: #a73030;        /* Brick — published error hue */
-  --border: #22395d;
-  --input: #22395d;
-  --ring: #38baf5;               /* Glow focus ring */
-  --sidebar: #071d3d;
-  --sidebar-foreground: #f5f6f8;
-  --sidebar-primary: #2f6fd0;
+  --border: #3d1a1a;
+  --input: #3d1a1a;
+  --ring: #ed4545;               /* Red Glow focus ring */
+  --sidebar: #2a0a0a;
+  --sidebar-foreground: #f7eeee;
+  --sidebar-primary: #ed4545;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #11294c;
-  --sidebar-accent-foreground: #f5f6f8;
-  --sidebar-border: #22395d;
-  --sidebar-ring: #38baf5;
-  --chart-1: #38baf5;            /* Glow */
-  --chart-2: #7ba7e0;
-  --chart-3: #b5cbea;            /* Cobalt 200 */
+  --sidebar-accent: #351515;
+  --sidebar-accent-foreground: #f7eeee;
+  --sidebar-border: #3d1a1a;
+  --sidebar-ring: #ed4545;
+  --chart-1: #ed4545;            /* Red Glow */
+  --chart-2: #ff8a8a;
+  --chart-3: #c7a6a6;
   --chart-4: #3fb58f;            /* Jade, lifted */
   --chart-5: #e6b053;            /* Amber, lifted */
 }
 
-/* Centri signature: the native Cobalt -> Deep linear gradient. */
+/* AdversaryOps signature: the red gradient (Red Glow -> Red Deep). */
 :root {
-  --brand-gradient: linear-gradient(135deg, #0a45a3 0%, #03122b 100%);
+  --brand-gradient: linear-gradient(135deg, #ed4545 0%, #170202 100%);
 }
 .bg-brand-gradient {
   background-image: var(--brand-gradient);

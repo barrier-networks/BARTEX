@@ -51,31 +51,29 @@ engineering audience picking the work up.
 - Existing `db/migrations/*` and `db/schema.sql` are checksum-verified, so they
   were **not** edited; the brand rename never touched them.
 
-### 2.2 Brand identity ✅ (from guidelines) / 🟡 (official logo mark)
-- **Palette + type now taken from the official Barrier Brand Refinement
-  guidelines (Figma).** Applied to `web/src/app/globals.css` (light + dark
-  console) and the report template:
-  - **Cobalt `#0A45A3`** and **Deep `#03122B`** lead; **Glow `#38BAF5`** accents
-    on Deep; slate neutrals (`#31445F`/`#596A83`/`#8A95A7`/…) support.
-  - Status hues are published-fixed: **Jade `#006951`** success, **Brick
-    `#A73030`** error, **Amber `#855400`** warning.
-  - Typeface stack **Aptos → Calibri → Segoe UI → Arial** (Inter was explicitly
-    review-only in the guidelines, not the brand face). Mono: Cascadia/Consolas.
-- **Sub-brand: the platform carries Centri.** Per the guidelines, Centri rides
-  the core Cobalt/Deep system (no distinct accent hue; its signature is the
-  native Cobalt→Deep linear gradient and the gradient-oval mark). Applied:
-  product name/title → **Centri** (`app-config`, login, setup, sidebar; the
-  operator *username* stays `Barrier`), a Cobalt→Deep **gradient-oval logo**
-  (`logo.svg` + raster, matching the brand's oval-with-outline-pair motif, not
-  the earlier shield), and the Centri **gradient** on the login/setup panels
-  (`--brand-gradient` / `.bg-brand-gradient`). The report shares the oval mark
-  under the Barrier Networks wordmark (it is a consultancy deliverable).
-- **Follow-up (🟡):** this is a geometric placeholder mark in brand Cobalt — the
-  **official Barrier logo** should be exported from the brand file and dropped
-  in (the Figma asset download was blocked by this environment's egress proxy),
-  and `favicon.ico` refreshed to match. The product sub-brand lockups
-  (AdversaryOps, CISOaaS, Centri, ROC, Assure — Cobalt→Deep gradients) in the
-  guidelines are not yet reflected.
+### 2.2 Brand identity ✅
+- **Palette + type taken from the official Barrier Brand Refinement guidelines
+  (Figma).** Typeface stack **Aptos → Calibri → Segoe UI → Arial** (Inter was
+  review-only in the guidelines, not the brand face); mono Cascadia/Consolas.
+  Status hues stay published-fixed: **Jade `#006951`** success, **Brick
+  `#A73030`** error, **Amber `#855400`** warning.
+- **The console carries the AdversaryOps sub-brand** (the red-team pillar).
+  Applied to `web/src/app/globals.css` (light + dark):
+  - **Red Glow `#ED4545`** is the brand red (primary/accent/ring); **Red Deep
+    `#170202`** leads dark surfaces; the signature **red gradient** (Red Glow →
+    Red Deep) is on the login/setup panels via `--brand-gradient`.
+  - Product name/title → **AdversaryOps** (`app-config`, login, setup, sidebar);
+    the operator *username* stays `Barrier` (backend-asserted).
+  - **Logo: the real AdversaryOps mark**, downloaded from the brand Figma
+    (node `99:86`, "Supplied White · original SVG geometry") and used verbatim
+    at `web/public/logo.svg` (+ raster) — not a recreation. It renders in Red
+    Glow on light surfaces and white (inverted) on the red gradient panels.
+    (Downloading it required allow-listing `www.figma.com` on the environment,
+    which the user approved.)
+- **Note:** the client **report** still carries **Barrier Networks** company
+  branding (Cobalt + the earlier mark) rather than AdversaryOps red, on the view
+  that a client report is a consultancy deliverable; switch it to AdversaryOps or
+  the Barrier Networks master mark on request. `favicon.ico` not yet refreshed.
 
 ### 2.3 Skills ✅ (content) / 🟡 (image tooling)
 Three authorized-engagement playbooks added under `skills/`, validated by the
