@@ -3,11 +3,11 @@ import packageJson from "../../package.json";
 const currentYear = new Date().getFullYear();
 
 export const APP_CONFIG = {
-  name: "ARTEX",
+  name: "AdversaryOps",
   version: packageJson.version,
-  copyright: `© ${currentYear}, ARTEX.`,
+  copyright: `© ${currentYear} Barrier Networks.`,
   meta: {
-    title: "ARTEX — Autonomous Penetration Testing Console",
-    description: "Console for the LLM-driven autonomous penetration testing system",
+    title: "AdversaryOps — Autonomous Penetration Testing Console",
+    description: "AdversaryOps by Barrier Networks — console for the LLM-driven autonomous penetration testing platform",
   },
 };

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/intercept"
 )
 
 func TestInterceptBatchDecideHTTP(t *testing.T) {

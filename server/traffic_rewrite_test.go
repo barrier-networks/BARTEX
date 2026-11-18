@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic"
-	"github.com/Autumn-27/artex/traffic/rewrite"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/traffic"
+	"github.com/barrier-networks/bartex/traffic/rewrite"
 )
 
 const rewriteAPI = "/api/traffic/rewrite-rules"
@@ -482,7 +482,7 @@ func TestRewriteRulesLoadedAtStartup(t *testing.T) {
 	}
 
 	// Not the key that sealed the rule.
-	t.Setenv("ARTEX_SECRET_KEY", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("f", 32))))
+	t.Setenv("BARRIER_SECRET_KEY", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("f", 32))))
 	if m2, err := NewManager(t.TempDir(), ""); err == nil {
 		m2.Close()
 		t.Fatal("NewManager started under a key that cannot open the stored rules")

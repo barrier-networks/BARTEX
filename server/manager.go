@@ -16,16 +16,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/config"
-	pgdb "github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/enrich"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/traffic"
-	"github.com/Autumn-27/artex/traffic/rewrite"
 	actool "github.com/Autumn-27/norma/tool"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/config"
+	pgdb "github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/egress"
+	"github.com/barrier-networks/bartex/enrich"
+	"github.com/barrier-networks/bartex/guard"
+	"github.com/barrier-networks/bartex/intercept"
+	"github.com/barrier-networks/bartex/traffic"
+	"github.com/barrier-networks/bartex/traffic/rewrite"
 )
 
 // Task is one engagement: a description + goal + its own exploration store,
@@ -80,6 +80,18 @@ type Task struct {
 	// Atomic: it is switched through the API while tool calls read it.
 	targetGate  atomic.Bool
 	interceptor *intercept.Interceptor // owner of the target gate, handed to the scope
+
+	// Rules-of-Engagement binding. engagementID is nil when the task has no
+	// engagement (engagement_id IS NULL) — the engagement gate is then skipped and
+	// behaviour is byte-for-byte unchanged. engagementLoader resolves+builds the
+	// policy from the DB; the result is cached per task (engagementLoaded), so the
+	// hot path does no DB work. A resolve error is NOT cached (retried next call)
+	// and yields a blocking, unresolved policy (fail safe).
+	engagementMu     sync.Mutex
+	engagementID     *int64
+	engagementPol    *intercept.EngagementPolicy
+	engagementLoaded bool
+	engagementLoader func(id int64) (*intercept.EngagementPolicy, error)
 
 	// pendingTriggers accumulates the concrete changes (worker done / finding) that
 	// fired planning rounds since the last one consumed them. The debounce coalesces
@@ -323,7 +335,7 @@ const (
 	// agent/chat) have context compaction taken over by noa, replacing the built-in compaction. Read once per run; toggling affects only runs started afterwards.
 	settingNoaCompaction = "noa_compaction"
 	// Target noise profile (off|quiet|balanced|aggressive). When stored it wins over
-	// ARTEX_NOISE_PROFILE, which stays the fallback; applied at startup and on PUT.
+	// BARRIER_NOISE_PROFILE, which stays the fallback; applied at startup and on PUT.
 	settingNoiseProfile = "noise_profile"
 	// defaultWebSearchBackend is used when web search is on but no backend was picked.
 	defaultWebSearchBackend = "ddgs"
@@ -902,7 +914,7 @@ func unixNanoOrZero(t *time.Time) int64 {
 	return t.UnixNano()
 }
 
-func taskFromPG(pt *pgdb.Task, store *pgdb.ExplorationStore, ic *intercept.Interceptor) *Task {
+func taskFromPG(pt *pgdb.Task, store *pgdb.ExplorationStore, ic *intercept.Interceptor, loadEngagement func(id int64) (*intercept.EngagementPolicy, error)) *Task {
 	t := &Task{
 		ID: strconv.FormatInt(pt.ID, 10), ExpID: pt.ExplorationID,
 		Name:       pt.Name,
@@ -925,6 +937,11 @@ func taskFromPG(pt *pgdb.Task, store *pgdb.ExplorationStore, ic *intercept.Inter
 		interceptor: ic,
 	}
 	t.targetGate.Store(pt.TargetGate)
+	if pt.EngagementID != nil {
+		eid := *pt.EngagementID
+		t.engagementID = &eid
+	}
+	t.engagementLoader = loadEngagement
 	return t
 }
 
@@ -933,7 +950,67 @@ func taskFromPG(pt *pgdb.Task, store *pgdb.ExplorationStore, ic *intercept.Inter
 // Enabled reads the task's opt-in flag on every call, so a switch through the
 // API takes effect on the next tool call.
 func (t *Task) targetScope(wait time.Duration) intercept.TargetScope {
-	return intercept.TargetScope{TaskID: t.ID, Enabled: t.targetGate.Load, WaitBound: wait, Interceptor: t.interceptor}
+	s := intercept.TargetScope{TaskID: t.ID, Enabled: t.targetGate.Load, WaitBound: wait, Interceptor: t.interceptor}
+	// Attach the Rules-of-Engagement policy (nil when engagement_id IS NULL, which
+	// skips the engagement gate entirely). The engagement can only subtract reach.
+	s.Engagement = t.engagementPolicy()
+	return s
+}
+
+// engagementPolicy returns the resolved RoE policy for this task, or nil when no
+// engagement is attached (engagement_id IS NULL => byte-for-byte legacy
+// behaviour). The policy is cached per task. A resolve failure is not cached and
+// returns a blocking "unresolved" policy (fail safe: a task flagged for
+// enforcement whose policy cannot be resolved must not run wide).
+func (t *Task) engagementPolicy() *intercept.EngagementPolicy {
+	if t == nil {
+		return nil
+	}
+	t.engagementMu.Lock()
+	defer t.engagementMu.Unlock()
+	if t.engagementID == nil {
+		return nil
+	}
+	if t.engagementLoaded {
+		return t.engagementPol
+	}
+	if t.engagementLoader == nil {
+		return &intercept.EngagementPolicy{EngagementID: *t.engagementID, Unresolved: true}
+	}
+	pol, err := t.engagementLoader(*t.engagementID)
+	if err != nil || pol == nil {
+		return &intercept.EngagementPolicy{EngagementID: *t.engagementID, Unresolved: true}
+	}
+	t.engagementPol = pol
+	t.engagementLoaded = true
+	return pol
+}
+
+// currentEngagementID returns a copy of the task's engagement binding (nil when
+// none), for the DTO.
+func (t *Task) currentEngagementID() *int64 {
+	t.engagementMu.Lock()
+	defer t.engagementMu.Unlock()
+	if t.engagementID == nil {
+		return nil
+	}
+	eid := *t.engagementID
+	return &eid
+}
+
+// setEngagement updates the task's engagement binding and clears the cached
+// policy so the next tool call rebuilds it (used on attach/detach).
+func (t *Task) setEngagement(id *int64) {
+	t.engagementMu.Lock()
+	defer t.engagementMu.Unlock()
+	if id == nil {
+		t.engagementID = nil
+	} else {
+		eid := *id
+		t.engagementID = &eid
+	}
+	t.engagementPol = nil
+	t.engagementLoaded = false
 }
 
 // searchBackendEndpoints are the endpoints of the search backends. The
@@ -1014,7 +1091,7 @@ func (m *Manager) CreateTaskWithOptions(description, goal string, opts pgdb.Task
 	if err != nil {
 		return nil, err
 	}
-	t := taskFromPG(pt, m.pg.Exploration(pt.ExplorationID), m.interceptor)
+	t := taskFromPG(pt, m.pg.Exploration(pt.ExplorationID), m.interceptor, m.buildEngagementPolicy)
 	m.mu.Lock()
 	m.tasks[t.ID] = t
 	m.active = t.ID
@@ -1213,7 +1290,7 @@ func (m *Manager) LoadExisting() []*Task {
 		if _, ok := m.tasks[id]; ok {
 			continue
 		}
-		t := taskFromPG(pt, m.pg.Exploration(pt.ExplorationID), m.interceptor)
+		t := taskFromPG(pt, m.pg.Exploration(pt.ExplorationID), m.interceptor, m.buildEngagementPolicy)
 		m.tasks[id] = t
 		loaded = append(loaded, t)
 	}

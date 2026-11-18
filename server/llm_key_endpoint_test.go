@@ -9,8 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/db"
 )
 
 func TestSameLLMEndpoint(t *testing.T) {

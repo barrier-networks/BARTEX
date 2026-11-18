@@ -21,25 +21,25 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/llmpool"
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/artex/report"
-	"github.com/Autumn-27/artex/traffic"
 	"github.com/Autumn-27/norma/llm"
 	actool "github.com/Autumn-27/norma/tool"
 	"github.com/Autumn-27/norma/transcript"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/egress"
+	"github.com/barrier-networks/bartex/intercept"
+	"github.com/barrier-networks/bartex/llmpool"
+	"github.com/barrier-networks/bartex/llmrec"
+	"github.com/barrier-networks/bartex/report"
+	"github.com/barrier-networks/bartex/traffic"
 )
 
-// BuildVersion is the backend application version, injected from cmd/artex at
+// BuildVersion is the backend application version, injected from cmd/barrier at
 // startup (which in turn gets it from -ldflags "-X main.version=<tag>").
 // Defaults to "dev" for local builds. Exposed to the frontend via GET /api/health.
 var BuildVersion = "dev"
 
-// Server exposes the ARTEX backend over a JSON HTTP API for the shadcn/ui
+// Server exposes the Barrier backend over a JSON HTTP API for the shadcn/ui
 // frontend.
 type Server struct {
 	m      *Manager
@@ -49,13 +49,13 @@ type Server struct {
 	skillDir string // root directory for skill subdirectories
 	jwtKey   []byte // HS256 signing key loaded from / generated into keyDir/jwt.key
 
-	scrubSecrets bool // drop ARTEX_PG_DSN and the API keys from the environment once read (binary only)
+	scrubSecrets bool // drop BARRIER_PG_DSN and the API keys from the environment once read (binary only)
 
 	setupMu    sync.Mutex
 	setupToken string // one-time token POST /api/auth/init requires; empty when none is active
 
 	loginLimit     *loginLimiter  // per-IP attempt limit on POST /api/auth/login
-	trustedProxies []netip.Prefix // ARTEX_TRUSTED_PROXIES; see clientIP
+	trustedProxies []netip.Prefix // BARRIER_TRUSTED_PROXIES; see clientIP
 
 	// concMu serializes concurrency-cap decisions (admission + reconcile) so a
 	// scheduler tick and an HTTP settings change / task creation can't both count
@@ -821,12 +821,24 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/companies/{id}/scope", s.addCompanyScope)
 	mux.HandleFunc("POST /api/companies/reattribute", s.reattribute)
 
+	// Engagement / Rules-of-Engagement layer (Phase 1 operable API).
+	mux.HandleFunc("POST /api/engagements", s.createEngagement)
+	mux.HandleFunc("GET /api/engagements", s.listEngagements)
+	mux.HandleFunc("GET /api/engagements/{id}", s.getEngagement)
+	mux.HandleFunc("PATCH /api/engagements/{id}", s.updateEngagement)
+	mux.HandleFunc("POST /api/engagements/{id}/scope", s.addEngagementScope)
+	mux.HandleFunc("POST /api/tasks/{id}/engagement", s.attachTaskEngagement)
+
 	mux.HandleFunc("GET /api/exploration/frontier", s.frontier)
 	mux.HandleFunc("GET /api/exploration/findings", s.findings)
 	mux.HandleFunc("GET /api/exploration/findings/groups", s.findingGroups)
 	mux.HandleFunc("GET /api/exploration/findings/asset-tree", s.findingAssetTree)
 	mux.HandleFunc("GET /api/exploration/findings/stats", s.findingStats)
 	mux.HandleFunc("GET /api/exploration/findings/export", s.findingsExport)
+	// Client-ready, Barrier-branded report for a single task: HTML (always
+	// available) and PDF (headless Chromium; 501 when no browser is present).
+	mux.HandleFunc("GET /api/tasks/{id}/report.html", s.getTaskReportHTML)
+	mux.HandleFunc("GET /api/tasks/{id}/report.pdf", s.getTaskReportPDF)
 	s.registerFindingTraffic(mux)
 	mux.HandleFunc("GET /api/exploration/findings/{id}", s.getFinding)
 	mux.HandleFunc("GET /api/exploration/findings/{id}/lineage", s.findingLineage)
@@ -1040,8 +1052,8 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"ok": true})
 		return
 	}
-	out := map[string]any{"ok": true, "service": "artex", "version": BuildVersion}
-	// Opt-in only (ARTEX_UPDATE_CHECK); off, this returns "" without any request.
+	out := map[string]any{"ok": true, "service": "barrier", "version": BuildVersion}
+	// Opt-in only (BARRIER_UPDATE_CHECK); off, this returns "" without any request.
 	if latest := updates.newerVersion(r.Context(), time.Now(), BuildVersion); latest != "" {
 		out["latest_version"] = latest
 	}
@@ -1663,6 +1675,7 @@ type createTaskReq struct {
 	PlanHeartbeatSeconds int      `json:"plan_heartbeat_seconds"`      // planner heartbeat interval (seconds); 0/omitted = default 600 (10min); floor = default = 600, lower values are raised to 600
 	PlanQuietMode        *bool    `json:"plan_quiet_mode,omitempty"`   // planner quiet-mode switch (#86); omitted = default on; false = edge rounds always plan
 	TargetGate           *bool    `json:"target_gate,omitempty"`       // approval gate for asset targets, opt-in; omitted/null = off
+	EngagementID         *int64   `json:"engagement_id,omitempty"`     // bind the task to a Rules-of-Engagement engagement; omitted/null = none (engagement gate skipped, unchanged behaviour)
 	SeedFirstIntent      *bool    `json:"seed_first_intent,omitempty"` // issue one seed intent at creation (content = description + goal) so a worker can start right away without waiting for the first planner round; omitted/null = default off, the standard plan-then-execute flow. Pass true explicitly to enable (for CTF tasks often solved in one work, this skips the pre-start planner round).
 	CoverageEnabled      *bool    `json:"coverage_enabled,omitempty"`  // asset coverage feature; omitted/null = default on (true). false = disables coverage calculation/display/auto-accumulated scope + hides add_task_scope/list_untested_assets. company links are unaffected.
 	// InterceptRules: task-level asset interception/allow rules (entered at creation, stored in task_intercept_rules, never the global table).
@@ -1740,6 +1753,7 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 		InterceptRules:  interceptRules,
 		LLMRotate:       req.LLMRotate,
 		TargetGate:      req.TargetGate,
+		EngagementID:    req.EngagementID,
 	})
 	if err != nil {
 		if errors.Is(err, db.ErrTaskCategoryInvalid) || errors.Is(err, db.ErrTaskCategoryNotFound) {
@@ -2393,7 +2407,7 @@ func (s *Server) findingsExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stage, err := os.MkdirTemp("", "artex-finding-export-")
+	stage, err := os.MkdirTemp("", "barrier-finding-export-")
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -3731,7 +3745,7 @@ func (s *Server) settingsPayload() map[string]any {
 		// Render limits of IM messages; 0 = no truncation.
 		"notify_summary_max_runes": limits.SummaryRunes,
 		"notify_assets_max_shown":  limits.AssetsShown,
-		// Effective target noise profile (off by default): the stored setting, else ARTEX_NOISE_PROFILE.
+		// Effective target noise profile (off by default): the stored setting, else BARRIER_NOISE_PROFILE.
 		"noise_profile": egress.CurrentProfile().Name,
 	}
 }

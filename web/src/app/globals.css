@@ -127,6 +127,92 @@ These serve as the fallback; there is no separate default.css file. */
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* =============================================================
+   Barrier brand palette — from the Barrier Brand Refinement
+   guidelines (Figma). Per the current guidelines, service
+   offerings no longer take separate colours: every offering
+   (AdversaryOps, CISOaaS, ROC, Assure, …) shares this one core
+   palette and differs only by name and logo. Cobalt (#0A45A3) and
+   Deep (#03122B) lead; Glow (#38BAF5) accents on Deep only; slate
+   neutrals support; status hues are published-fixed (Jade #006951,
+   Brick #A73030, Amber #855400). Typeface: Aptos -> Calibri ->
+   Arial (Inter was review-only). Change brand colour here only.
+   ============================================================= */
+:root {
+  --font-sans: "Aptos", "Calibri", "Segoe UI", system-ui, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Consolas", "Courier New", monospace;
+
+  /* Light surfaces: Deep ink on white / subtle. */
+  --foreground: #03122b;         /* Deep */
+  --card-foreground: #03122b;
+  --popover-foreground: #03122b;
+  --primary: #0a45a3;            /* Cobalt — the action colour */
+  --primary-foreground: #ffffff;
+  --secondary: #f0f4fb;          /* Cobalt 50 */
+  --secondary-foreground: #03122b;
+  --muted: #f5f6f8;              /* surface subtle */
+  --muted-foreground: #596a83;   /* text secondary */
+  --accent: #f0f4fb;             /* Cobalt 50 hover surface */
+  --accent-foreground: #0a45a3;
+  --destructive: #a73030;        /* Brick — published error hue */
+  --border: #e9ecf0;
+  --input: #e9ecf0;
+  --ring: #0a45a3;
+  --sidebar-primary: #0a45a3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f4fb;
+  --sidebar-accent-foreground: #0a45a3;
+  --sidebar-ring: #0a45a3;
+  --chart-1: #0a45a3;            /* Cobalt */
+  --chart-2: #38baf5;            /* Glow */
+  --chart-3: #4f7dc0;            /* Cobalt 400 */
+  --chart-4: #006951;            /* Jade */
+  --chart-5: #855400;            /* Amber */
+}
+
+/* Dark console: Deep leads, Cobalt action, Glow accent. */
+.dark {
+  --background: #03122b;         /* Deep */
+  --foreground: #f5f6f8;
+  --card: #071d3d;               /* Deep, lifted */
+  --card-foreground: #f5f6f8;
+  --popover: #071d3d;
+  --popover-foreground: #f5f6f8;
+  --primary: #2f6fd0;            /* Cobalt lifted for contrast on Deep */
+  --primary-foreground: #ffffff;
+  --secondary: #11294c;
+  --secondary-foreground: #f5f6f8;
+  --muted: #11294c;
+  --muted-foreground: #8a95a7;   /* slate neutral */
+  --accent: #38baf5;             /* Glow — accent on Deep only */
+  --accent-foreground: #03122b;
+  --destructive: #a73030;        /* Brick — published error hue */
+  --border: #22395d;
+  --input: #22395d;
+  --ring: #38baf5;               /* Glow focus ring */
+  --sidebar: #071d3d;
+  --sidebar-foreground: #f5f6f8;
+  --sidebar-primary: #2f6fd0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #11294c;
+  --sidebar-accent-foreground: #f5f6f8;
+  --sidebar-border: #22395d;
+  --sidebar-ring: #38baf5;
+  --chart-1: #38baf5;            /* Glow */
+  --chart-2: #7ba7e0;
+  --chart-3: #b5cbea;            /* Cobalt 200 */
+  --chart-4: #3fb58f;            /* Jade, lifted */
+  --chart-5: #e6b053;            /* Amber, lifted */
+}
+
+/* Brand gradient: the native Cobalt -> Deep linear gradient. */
+:root {
+  --brand-gradient: linear-gradient(135deg, #0a45a3 0%, #03122b 100%);
+}
+.bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

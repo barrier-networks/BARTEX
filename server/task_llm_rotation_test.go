@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
 	"github.com/Autumn-27/norma/llm"
+	"github.com/barrier-networks/bartex/db"
 )
 
 func TestLLMProfilePinRoundTrip(t *testing.T) {
@@ -147,7 +147,7 @@ func TestRotationConcurrentProvidersAndPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reloaded := taskFromPG(pt, task.Store, m.interceptor)
+	reloaded := taskFromPG(pt, task.Store, m.interceptor, nil)
 	if !reloaded.llmStateSnapshot().Rotate {
 		t.Fatal("task reload lost enabled rotation")
 	}

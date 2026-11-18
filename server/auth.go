@@ -18,7 +18,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/Autumn-27/artex/config"
+	"github.com/barrier-networks/bartex/config"
 )
 
 const (
@@ -53,12 +53,12 @@ func validatePassword(pw string) string {
 }
 
 // jwtLegacyBaseDir is the second legacy key location (the executable's directory,
-// where releases before ARTEX_JWT_KEY_DIR wrote the key). A var so tests can point it
+// where releases before BARRIER_JWT_KEY_DIR wrote the key). A var so tests can point it
 // at a temp dir.
 var jwtLegacyBaseDir = config.BaseDir
 
 // loadOrCreateJWTKey reads the 32-byte signing key from keyDir/jwt.key. keyDir is
-// ARTEX_JWT_KEY_DIR (the /app/keys volume in Docker) or the project base dir, NOT
+// BARRIER_JWT_KEY_DIR (the /app/keys volume in Docker) or the project base dir, NOT
 // the browsable workspace root (dataDir) — the signing key must never be
 // listable/downloadable via the file manager. When keyDir/jwt.key is missing, a key
 // at dataDir/jwt.key, then at BaseDir()/jwt.key, is migrated (key preserved, so
@@ -158,10 +158,10 @@ func samePath(a, b string) bool {
 	return a == b
 }
 
-// signJWT issues a 7-day HS256 token for user ARTEX.
+// signJWT issues a 7-day HS256 token for user Barrier.
 func signJWT(key []byte) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   "ARTEX",
+		Subject:   "Barrier",
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(jwtTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}).SignedString(key)
@@ -420,7 +420,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request, getSetting func(s
 		writeErr(w, 400, "Invalid request format")
 		return
 	}
-	if req.Username != "ARTEX" {
+	if req.Username != "Barrier" {
 		writeErr(w, 401, "Incorrect username or password")
 		return
 	}

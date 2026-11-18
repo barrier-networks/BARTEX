@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
+	"github.com/barrier-networks/bartex/agent"
 )
 
 func TestWaitBlocksUntilDetachedInflightEnds(t *testing.T) {

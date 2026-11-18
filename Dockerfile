@@ -31,16 +31,16 @@ RUN go mod download
 COPY . .
 # Reuse the frontend built above; build.sh skips its own frontend step.
 COPY --from=web /src/web/out ./server/webui/dist
-ARG ARTEX_VERSION=dev
+ARG BARRIER_VERSION=dev
 ARG TARGETOS
 ARG TARGETARCH
-# Same flags as the release binaries job (ARTEX_COMPRESS=0, -trimpath,
+# Same flags as the release binaries job (BARRIER_COMPRESS=0, -trimpath,
 # -X main.version), driven through build.sh so there is one build path.
-RUN ARTEX_SKIP_FRONTEND=1 \
-    ARTEX_SKIP_NPM_CI=1 \
-    ARTEX_COMPRESS=0 \
-    ARTEX_OUTPUT=/out/artex \
-    ARTEX_BUILD_VERSION="${ARTEX_VERSION}" \
+RUN BARRIER_SKIP_FRONTEND=1 \
+    BARRIER_SKIP_NPM_CI=1 \
+    BARRIER_COMPRESS=0 \
+    BARRIER_OUTPUT=/out/barrier \
+    BARRIER_BUILD_VERSION="${BARRIER_VERSION}" \
     bash ./build.sh --target "${TARGETOS:-linux}/${TARGETARCH:-amd64}"
 
 # ------------------------------------------------------- third-party tools ---
@@ -140,7 +140,7 @@ RUN set -eux; \
     ffuf -V >/dev/null; dalfox --version >/dev/null; sqlmap --version >/dev/null
 
 # bbot recursive recon orchestrator (#117): blacklanternsecurity/bbot, AGPL-3.0
-# (same license as ARTEX; standalone CLI dependency, not linked code). Pinned
+# (same license as Barrier; standalone CLI dependency, not linked code). Pinned
 # version, own venv to isolate from the image python. Module dependencies are
 # preinstalled (--install-all-deps) so scans never need pip at runtime, which
 # would fail under a program's egress allowlist.
@@ -167,6 +167,20 @@ RUN set -eux; \
     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
 
 
+# Pacu AWS assessment framework — Barrier Networks fork (barrier-networks/pacu),
+# AGPL-compatible BSD-3. Own venv to isolate from the image python; pinned to a
+# commit so a moved tag/branch cannot change what ships. Used by the cloud-recon
+# skill for credentialed AWS enumeration (its *__enum* and iam__privesc_scan
+# --scan-only modules); exploitation/persistence/exfil modules run only under an
+# engagement that explicitly authorises them and the platform approval gate.
+ARG PACU_COMMIT=e597f23ecfb88b82f706c5f0cac9d4577c2af262
+RUN set -eux; \
+    python -m venv /opt/pacu; \
+    /opt/pacu/bin/pip install --no-cache-dir "git+https://github.com/barrier-networks/pacu.git@${PACU_COMMIT}"; \
+    ln -s /opt/pacu/bin/pacu /usr/local/bin/pacu; \
+    pacu --version >/dev/null
+
+
 # Preinstall Playwright MCP and CLI (globally) so no npx network download is needed at runtime.
 # @playwright/mcp: browser MCP runs directly via `npx @playwright/mcp` (installed globally, no -y/@latest needed).
 # @playwright/cli: provides playwright-cli, verified with --help right after install.
@@ -182,14 +196,14 @@ RUN npm install -g "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # Binary compiled from source in the build stage above.
-COPY --from=build /out/artex /app/artex
+COPY --from=build /out/barrier /app/barrier
 # Daemon startup script: relaunches the process after a crash and forwards SIGTERM
-# to artex — docker stop only signals PID 1; without forwarding, artex never receives it,
+# to barrier — docker stop only signals PID 1; without forwarding, barrier never receives it,
 # cannot shut down gracefully, and is hard-killed by SIGKILL after 10 seconds.
 COPY start.sh /app/start.sh
-RUN chmod +x /app/artex /app/start.sh && mkdir -p /app/keys
+RUN chmod +x /app/barrier /app/start.sh && mkdir -p /app/keys
 COPY skills/ /app/skills/
-# persistence points: data/ (traffic index, task files, transcripts) and keys/ (jwt.key, secret.key, via ARTEX_JWT_KEY_DIR)
+# persistence points: data/ (traffic index, task files, transcripts) and keys/ (jwt.key, secret.key, via BARRIER_JWT_KEY_DIR)
 VOLUME ["/app/data", "/app/keys"]
 EXPOSE 8787 8788
 ENTRYPOINT ["/app/start.sh"]

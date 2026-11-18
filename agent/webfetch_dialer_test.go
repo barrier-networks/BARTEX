@@ -15,10 +15,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
 	actool "github.com/Autumn-27/norma/tool"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/guard"
+	"github.com/barrier-networks/bartex/intercept"
 )
 
 // Step 2.1: the WebFetch tool of every agent kind connects through the pinned

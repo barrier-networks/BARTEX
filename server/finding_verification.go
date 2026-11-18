@@ -13,9 +13,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/evidence"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/evidence"
 )
 
 // S1 receipt check. A finding is verified only when a proof/verification

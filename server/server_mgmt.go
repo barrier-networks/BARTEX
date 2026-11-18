@@ -24,11 +24,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/notify"
 	"github.com/Autumn-27/norma/llm"
 	"github.com/Autumn-27/norma/skill"
+	"github.com/barrier-networks/bartex/agent"
+	"github.com/barrier-networks/bartex/db"
+	"github.com/barrier-networks/bartex/notify"
 )
 
 // validSkillName checks the agentskills.io name constraints, widened so a skill can
