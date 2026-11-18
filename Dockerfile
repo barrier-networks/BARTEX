@@ -194,6 +194,22 @@ RUN npm install -g "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@
     && playwright-cli --help \
     && playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# OpenAI Codex CLI: the default external-harness backend, driven in whole-task
+# mode through the governed BARTEX Tools MCP server. Authenticated from the UI
+# (System → Harness) via device-code or an API key; credentials live in
+# CODEX_HOME, which is a persisted volume so a rebuild keeps the login.
+ARG CODEX_VERSION=0.170.0
+RUN npm install -g "@openai/codex@${CODEX_VERSION}" && codex --version
+ENV CODEX_HOME=/app/codex-home
+# BARTEX runs inside this container, which is the harness's isolation boundary
+# (the design doc's "run with the CLI's own sandbox off inside a container"
+# path): the launcher may spawn the CLI without a per-process OS sandbox here,
+# with egress still forced through the recording proxy. On a bare host this stays
+# unset and the launcher requires a real sandbox (macOS Seatbelt).
+ENV BARTEX_HARNESS_ALLOW_UNSANDBOXED=1
+RUN mkdir -p /app/codex-home
+
 WORKDIR /app
 # Binary compiled from source in the build stage above.
 COPY --from=build /out/bartex /app/bartex
@@ -203,8 +219,9 @@ COPY --from=build /out/bartex /app/bartex
 COPY start.sh /app/start.sh
 RUN chmod +x /app/bartex /app/start.sh && mkdir -p /app/keys
 COPY skills/ /app/skills/
-# persistence points: data/ (traffic index, task files, transcripts) and keys/ (jwt.key, secret.key, via BARTEX_JWT_KEY_DIR)
-VOLUME ["/app/data", "/app/keys"]
+# persistence points: data/ (traffic index, task files, transcripts), keys/ (jwt.key, secret.key, via BARTEX_JWT_KEY_DIR),
+# and codex-home/ (Codex CLI auth.json, so a rebuild keeps the harness login).
+VOLUME ["/app/data", "/app/keys", "/app/codex-home"]
 EXPOSE 8787 8788
 ENTRYPOINT ["/app/start.sh"]
 CMD ["-addr", ":8787", "-proxy", ":8788"]

@@ -2,7 +2,16 @@
 
 import * as React from "react";
 
-import { PlusIcon, RefreshCwIcon, ShieldIcon, TerminalSquareIcon, Trash2Icon } from "lucide-react";
+import {
+  CheckCircle2Icon,
+  KeyRoundIcon,
+  LogInIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  ShieldIcon,
+  TerminalSquareIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,12 +45,21 @@ type FormState = {
 const PRESETS: Record<Kind, Partial<FormState>> = {
   codex: {
     command: "codex",
+    // `codex exec`, non-interactive, externally sandboxed (BARTEX's container is
+    // the boundary). The bartex MCP server is injected inline via -c overrides so
+    // the per-run endpoint + token travel with the invocation (codex reads
+    // mcp_servers from config, not a --mcp-config file).
     args: [
       "exec",
-      "--ask-for-approval",
-      "never",
-      "--sandbox",
-      "danger-full-access",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "-c",
+      'mcp_servers.bartex.command="{{SELF_EXE}}"',
+      "-c",
+      'mcp_servers.bartex.args=["mcp-stdio"]',
+      "-c",
+      'mcp_servers.bartex.env.BARTEX_MCP_ENDPOINT="{{MCP_ENDPOINT}}"',
+      "-c",
+      'mcp_servers.bartex.env.BARTEX_MCP_TOKEN="{{MCP_TOKEN}}"',
       "-c",
       "daybreak=true",
       "{{PROMPT}}",
@@ -262,6 +280,8 @@ export default function HarnessPage() {
         </CardContent>
       </Card>
 
+      <CodexAuthCard />
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : profiles.length === 0 ? (
@@ -434,5 +454,175 @@ export default function HarnessPage() {
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+// CodexAuthCard manages Codex CLI authentication inside the container (System →
+// Harness). Device-code sign-in shows a URL + one-time code to complete in a
+// browser; an API-key path is offered as an alternative. Auth persists in the
+// container's CODEX_HOME volume.
+function CodexAuthCard() {
+  const [loggedIn, setLoggedIn] = React.useState(false);
+  const [detail, setDetail] = React.useState("");
+  const [pending, setPending] = React.useState<{ url: string; code: string } | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [showKey, setShowKey] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState("");
+
+  const refresh = React.useCallback(async () => {
+    try {
+      const st = await api.codexStatus();
+      setLoggedIn(st.logged_in);
+      setDetail(st.detail ?? "");
+      if (st.pending) {
+        setPending({ url: st.pending.url, code: st.pending.code });
+      } else {
+        setPending(null);
+      }
+      if (st.logged_in) setPending(null);
+    } catch {
+      /* harness auth is optional; ignore load errors */
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // While a device login is pending, poll status so the card flips to "signed in"
+  // once the operator authorizes in their browser.
+  React.useEffect(() => {
+    if (!pending) return;
+    const t = setInterval(() => void refresh(), 4000);
+    return () => clearInterval(t);
+  }, [pending, refresh]);
+
+  async function startDevice() {
+    setBusy(true);
+    try {
+      const r = await api.codexDeviceLogin();
+      setPending({ url: r.url, code: r.code });
+      toast.success("Open the link and enter the code to finish sign-in");
+    } catch (e) {
+      toast.error(`Device sign-in failed: ${String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveKey() {
+    if (!apiKey.trim()) return;
+    setBusy(true);
+    try {
+      await api.codexApiKeyLogin(apiKey.trim());
+      setApiKey("");
+      setShowKey(false);
+      toast.success("Codex authenticated with API key");
+      await refresh();
+    } catch (e) {
+      toast.error(`API-key sign-in failed: ${String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    setBusy(true);
+    try {
+      await api.codexLogout();
+      setPending(null);
+      await refresh();
+      toast.success("Codex signed out");
+    } catch (e) {
+      toast.error(`Sign-out failed: ${String(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <KeyRoundIcon className="size-4" /> Codex authentication
+          {loggedIn ? (
+            <Badge variant="secondary" className="gap-1">
+              <CheckCircle2Icon className="size-3" /> Signed in
+            </Badge>
+          ) : (
+            <Badge variant="outline">Not signed in</Badge>
+          )}
+        </CardTitle>
+        <CardDescription>
+          Sign Codex in inside the container so the harness backend can run. Credentials persist across rebuilds.
+          {detail ? <span className="ml-1 font-mono text-xs">· {detail}</span> : null}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {pending ? (
+          <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            <p className="mb-2 text-muted-foreground">Finish sign-in in your browser:</p>
+            <ol className="ml-4 list-decimal space-y-1">
+              <li>
+                Open{" "}
+                <a href={pending.url} target="_blank" rel="noreferrer" className="font-medium text-primary underline">
+                  {pending.url}
+                </a>
+              </li>
+              <li>
+                Enter this one-time code (expires in 15 min):{" "}
+                <code className="rounded bg-background px-1.5 py-0.5 font-mono text-base tracking-widest">
+                  {pending.code}
+                </code>
+              </li>
+            </ol>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Waiting for authorization… this card updates automatically.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap gap-2">
+          {!loggedIn ? (
+            <Button size="sm" onClick={() => void startDevice()} disabled={busy}>
+              <LogInIcon className="size-4" /> Sign in with ChatGPT
+            </Button>
+          ) : null}
+          <Button size="sm" variant="outline" onClick={() => setShowKey((v) => !v)} disabled={busy}>
+            <KeyRoundIcon className="size-4" /> Use API key
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => void refresh()} disabled={busy}>
+            <RefreshCwIcon className="size-4" /> Refresh
+          </Button>
+          {loggedIn ? (
+            <Button size="sm" variant="ghost" onClick={() => void logout()} disabled={busy}>
+              Sign out
+            </Button>
+          ) : null}
+        </div>
+
+        {showKey ? (
+          <div className="flex items-end gap-2">
+            <div className="grid flex-1 gap-1">
+              <Label>OpenAI API key</Label>
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-…"
+                autoComplete="off"
+              />
+            </div>
+            <Button size="sm" onClick={() => void saveKey()} disabled={busy || !apiKey.trim()}>
+              Save
+            </Button>
+          </div>
+        ) : null}
+        <p className="text-xs text-muted-foreground">
+          Daybreak Red requires a ChatGPT sign-in; device-code sign-in must be enabled in your ChatGPT security
+          settings. API-key sign-in uses API billing and some Daybreak features may require ChatGPT auth.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

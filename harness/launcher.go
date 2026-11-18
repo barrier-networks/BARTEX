@@ -22,10 +22,12 @@ import (
 // The launcher only injects the standard BARTEX pieces by substituting
 // placeholders in Args and adding environment:
 //
-//	{{PROMPT}}      → the intent text (the one thing the CLI must act on)
-//	{{MCP_CONFIG}}  → path to the generated MCP config file (stdio transport)
-//	{{MCP_URL}}     → the governed MCP endpoint URL (http transport)
-//	{{RUN_DIR}}     → the confined working directory
+//	{{PROMPT}}       → the intent text (the one thing the CLI must act on)
+//	{{MCP_CONFIG}}   → path to the generated MCP config file (stdio, claude-code)
+//	{{MCP_URL}} / {{MCP_ENDPOINT}} → the governed MCP endpoint URL
+//	{{MCP_TOKEN}}    → the task-scoped bearer token (for inline -c overrides)
+//	{{SELF_EXE}}     → path to the bartex binary (the stdio bridge)
+//	{{RUN_DIR}}      → the confined working directory
 //
 // and env: the proxy variables (forced egress) plus BARTEX_MCP_ENDPOINT /
 // BARTEX_MCP_TOKEN (read by `bartex mcp-stdio` and by http-transport CLIs).
@@ -73,9 +75,17 @@ func (l Launch) Build(ctx context.Context, sb Sandbox) (*exec.Cmd, func(), error
 
 	cleanup := func() {}
 	subst := map[string]string{
-		"{{PROMPT}}":  l.Prompt,
-		"{{RUN_DIR}}": runDir,
-		"{{MCP_URL}}": l.MCPEndpoint,
+		"{{PROMPT}}":       l.Prompt,
+		"{{RUN_DIR}}":      runDir,
+		"{{MCP_URL}}":      l.MCPEndpoint,
+		"{{MCP_ENDPOINT}}": l.MCPEndpoint,
+		"{{MCP_TOKEN}}":    l.MCPToken,
+		"{{SELF_EXE}}": func() string {
+			if l.SelfExe != "" {
+				return l.SelfExe
+			}
+			return "bartex"
+		}(),
 	}
 	if l.Transport == "stdio" {
 		cfgPath, cfg, err := l.writeMCPConfig(runDir)
@@ -109,6 +119,14 @@ func (l Launch) buildEnv(runDir string) []string {
 		// Non-interactive hygiene for child CLIs.
 		"NO_COLOR": "1",
 		"CI":       "1",
+	}
+	// Inherit the CLI's auth/home directories so a UI-authenticated login (stored
+	// outside the per-run HOME) is found. HOME is the run dir for confinement, so
+	// these must be passed explicitly.
+	for _, k := range []string{"CODEX_HOME", "CODEX_API_KEY"} {
+		if v := os.Getenv(k); v != "" {
+			base[k] = v
+		}
 	}
 	for k, v := range l.Env {
 		base[k] = v
