@@ -51,19 +51,24 @@ engineering audience picking the work up.
 - Existing `db/migrations/*` and `db/schema.sql` are checksum-verified, so they
   were **not** edited; the brand rename never touched them.
 
-### 2.2 Brand identity 🟡
-- Barrier logo shipped as a self-coloured SVG (`web/public/logo.svg`, shield +
-  three ascending barrier bars) plus a regenerated raster (`logo.png`); login /
-  setup / sidebar reference the vector.
-- Centralised brand palette (brand blue primary, cyan accent, matching ring /
-  sidebar / chart ramp) in `web/src/app/globals.css`, light + dark.
-- **Caveat (flagged):** `barriernetworks.com` was **not reachable** from the
-  build network, so the exact brand hex and fonts could **not** be read from the
-  live site. The applied palette is a professional **inference** and is isolated
-  in one block in `globals.css` for a one-line swap once confirmed. The brand
-  research spec (confirmed-vs-inferred table) is in the session scratchpad.
-  **Follow-up:** allow-list `barriernetworks.com` and replace the palette +
-  fonts with the real values; refresh `favicon.ico`.
+### 2.2 Brand identity ✅ (from guidelines) / 🟡 (official logo mark)
+- **Palette + type now taken from the official Barrier Brand Refinement
+  guidelines (Figma).** Applied to `web/src/app/globals.css` (light + dark
+  console) and the report template:
+  - **Cobalt `#0A45A3`** and **Deep `#03122B`** lead; **Glow `#38BAF5`** accents
+    on Deep; slate neutrals (`#31445F`/`#596A83`/`#8A95A7`/…) support.
+  - Status hues are published-fixed: **Jade `#006951`** success, **Brick
+    `#A73030`** error, **Amber `#855400`** warning.
+  - Typeface stack **Aptos → Calibri → Segoe UI → Arial** (Inter was explicitly
+    review-only in the guidelines, not the brand face). Mono: Cascadia/Consolas.
+- Logo: a self-coloured Cobalt SVG (`web/public/logo.svg`, shield + ascending
+  bars) + regenerated raster; login/setup/sidebar reference the vector.
+- **Follow-up (🟡):** this is a geometric placeholder mark in brand Cobalt — the
+  **official Barrier logo** should be exported from the brand file and dropped
+  in (the Figma asset download was blocked by this environment's egress proxy),
+  and `favicon.ico` refreshed to match. The product sub-brand lockups
+  (AdversaryOps, CISOaaS, Centri, ROC, Assure — Cobalt→Deep gradients) in the
+  guidelines are not yet reflected.
 
 ### 2.3 Skills ✅ (content) / 🟡 (image tooling)
 Three authorized-engagement playbooks added under `skills/`, validated by the
@@ -164,8 +169,9 @@ Four detailed design/research docs were produced and drive the feature work:
 
 ## 5. Prioritised follow-ups
 
-1. Replace inferred brand palette/fonts with confirmed Barrier Networks values
-   (needs `barriernetworks.com` network access); refresh `favicon.ico`.
+1. Drop in the **official Barrier logo mark** (export from the brand Figma —
+   blocked by the egress proxy this session) and refresh `favicon.ico`; the
+   palette/fonts are already applied from the guidelines.
 2. Add the remaining cloud/infra tools to the Dockerfile tools stage (Pacu is
    already wired for AWS; Azure CLI, Prowler, ScoutSuite, cloud_enum, naabu,
    fingerprintx, testssl.sh/sslscan still pending) and build the image in CI to

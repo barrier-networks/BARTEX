@@ -128,42 +128,79 @@ These serve as the fallback; there is no separate default.css file. */
 }
 
 /* =============================================================
-   Barrier brand palette (centralised override).
-   Colours INFERRED from Barrier Networks' public identity; the
-   exact brand hex were not readable (barriernetworks.com was not
-   reachable). Swap the values here once confirmed — nothing else
-   references brand colours directly.
+   Barrier brand palette — from the Barrier Brand Refinement
+   guidelines (Figma). Cobalt (#0A45A3) and Deep (#03122B) lead;
+   Glow (#38BAF5) accents on Deep only; slate neutrals support;
+   status hues are published-fixed (Jade #006951, Brick #A73030,
+   Amber #855400). Typeface: Aptos -> Calibri -> Arial (Inter was
+   review-only, not the brand face). Change brand colour here only —
+   nothing else hard-codes it.
    ============================================================= */
 :root {
-  --primary: #1e6feb;            /* brand blue */
+  --font-sans: "Aptos", "Calibri", "Segoe UI", system-ui, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Consolas", "Courier New", monospace;
+
+  /* Light surfaces: Deep ink on white / subtle. */
+  --foreground: #03122b;         /* Deep */
+  --card-foreground: #03122b;
+  --popover-foreground: #03122b;
+  --primary: #0a45a3;            /* Cobalt — the action colour */
   --primary-foreground: #ffffff;
-  --accent: #0e9f8e;             /* cyan, darkened for light bg */
-  --accent-foreground: #ffffff;
-  --ring: #1e6feb;
-  --sidebar-primary: #1e6feb;
+  --secondary: #f0f4fb;          /* Cobalt 50 */
+  --secondary-foreground: #03122b;
+  --muted: #f5f6f8;              /* surface subtle */
+  --muted-foreground: #596a83;   /* text secondary */
+  --accent: #f0f4fb;             /* Cobalt 50 hover surface */
+  --accent-foreground: #0a45a3;
+  --destructive: #a73030;        /* Brick — published error hue */
+  --border: #e9ecf0;
+  --input: #e9ecf0;
+  --ring: #0a45a3;
+  --sidebar-primary: #0a45a3;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-ring: #1e6feb;
-  --chart-1: #1e6feb;
-  --chart-2: #2dd4bf;
-  --chart-3: #6366f1;
-  --chart-4: #f59e0b;
-  --chart-5: #a855f7;
+  --sidebar-accent: #f0f4fb;
+  --sidebar-accent-foreground: #0a45a3;
+  --sidebar-ring: #0a45a3;
+  --chart-1: #0a45a3;            /* Cobalt */
+  --chart-2: #38baf5;            /* Glow */
+  --chart-3: #4f7dc0;            /* Cobalt 400 */
+  --chart-4: #006951;            /* Jade */
+  --chart-5: #855400;            /* Amber */
 }
 
+/* Dark console: Deep leads, Cobalt action, Glow accent. */
 .dark {
-  --primary: #3b82f6;            /* brand blue, lifted for dark bg */
-  --primary-foreground: #061021;
-  --accent: #2dd4bf;             /* cyan */
-  --accent-foreground: #04201c;
-  --ring: #3b82f6;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #061021;
-  --sidebar-ring: #3b82f6;
-  --chart-1: #3b82f6;
-  --chart-2: #2dd4bf;
-  --chart-3: #818cf8;
-  --chart-4: #f59e0b;
-  --chart-5: #c084fc;
+  --background: #03122b;         /* Deep */
+  --foreground: #f5f6f8;
+  --card: #071d3d;               /* Deep, lifted */
+  --card-foreground: #f5f6f8;
+  --popover: #071d3d;
+  --popover-foreground: #f5f6f8;
+  --primary: #2f6fd0;            /* Cobalt lifted for contrast on Deep */
+  --primary-foreground: #ffffff;
+  --secondary: #11294c;
+  --secondary-foreground: #f5f6f8;
+  --muted: #11294c;
+  --muted-foreground: #8a95a7;   /* slate neutral */
+  --accent: #38baf5;             /* Glow — accent on Deep only */
+  --accent-foreground: #03122b;
+  --destructive: #a73030;        /* Brick — published error hue */
+  --border: #22395d;
+  --input: #22395d;
+  --ring: #38baf5;               /* Glow focus ring */
+  --sidebar: #071d3d;
+  --sidebar-foreground: #f5f6f8;
+  --sidebar-primary: #2f6fd0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #11294c;
+  --sidebar-accent-foreground: #f5f6f8;
+  --sidebar-border: #22395d;
+  --sidebar-ring: #38baf5;
+  --chart-1: #38baf5;            /* Glow */
+  --chart-2: #7ba7e0;
+  --chart-3: #b5cbea;            /* Cobalt 200 */
+  --chart-4: #3fb58f;            /* Jade, lifted */
+  --chart-5: #e6b053;            /* Amber, lifted */
 }
 
 @layer base {

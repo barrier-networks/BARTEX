@@ -2,7 +2,7 @@
   <title>Barrier</title>
   <!-- Shield with three ascending barrier bars knocked out (negative space).
        Single brand-blue fill; reads as a clean silhouette when inverted. -->
-  <path fill="#1E6FEB" fill-rule="evenodd" clip-rule="evenodd"
+  <path fill="#0A45A3" fill-rule="evenodd" clip-rule="evenodd"
         d="M32 3 L57 13 L57 31 C57 47 46 57.5 32 61.5 C18 57.5 7 47 7 31 L7 13 Z
            M20 40 H25 V48 H20 Z
            M29.5 32 H34.5 V48 H29.5 Z

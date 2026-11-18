@@ -15,16 +15,18 @@ const clientReportHTML = `<!doctype html>
 <title>{{.Meta.Client}} — {{.Meta.Title}}</title>
 <style>
   :root {
-    --brand: #1e6feb; --accent: #0e9f8e; --ink: #0b1220; --muted: #51607a;
-    --line: #d6deea; --bg: #ffffff; --soft: #f5f7fa;
-    --sev-critical: #b91c1c; --sev-high: #ea580c; --sev-medium: #b45309;
-    --sev-low: #2563eb; --sev-info: #6b7280;
+    /* Barrier brand (from the brand guidelines): Cobalt + Deep, Glow accent. */
+    --brand: #0a45a3; --accent: #38baf5; --ink: #03122b; --muted: #596a83;
+    --line: #e9ecf0; --bg: #ffffff; --soft: #f5f6f8;
+    /* Status hues are published-fixed: Brick / Amber / Jade. */
+    --sev-critical: #a73030; --sev-high: #b8510a; --sev-medium: #855400;
+    --sev-low: #0a45a3; --sev-info: #596a83;
   }
   * { box-sizing: border-box; }
   body { margin: 0; color: var(--ink); background: var(--bg);
-    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-family: "Aptos", "Calibri", "Segoe UI", system-ui, Arial, sans-serif;
     font-size: 11pt; line-height: 1.5; }
-  code, pre, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  code, pre, .mono { font-family: ui-monospace, "Cascadia Code", "Consolas", "Courier New", monospace; }
   .page { max-width: 900px; margin: 0 auto; padding: 32px 40px; }
   h1, h2, h3 { color: var(--ink); line-height: 1.25; }
   h2 { border-bottom: 2px solid var(--brand); padding-bottom: 6px; margin-top: 40px; }
@@ -85,7 +87,7 @@ const clientReportHTML = `<!doctype html>
     <div class="classification">{{.Meta.Classification}}</div>
     <div class="brand" style="margin-top:40px">
       <svg class="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path fill="#1E6FEB" fill-rule="evenodd" clip-rule="evenodd"
+        <path fill="#0A45A3" fill-rule="evenodd" clip-rule="evenodd"
           d="M32 3 L57 13 L57 31 C57 47 46 57.5 32 61.5 C18 57.5 7 47 7 31 L7 13 Z
              M20 40 H25 V48 H20 Z M29.5 32 H34.5 V48 H29.5 Z M39 24 H44 V48 H39 Z"/>
       </svg>
