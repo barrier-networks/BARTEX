@@ -57,6 +57,10 @@ type Server struct {
 	loginLimit     *loginLimiter  // per-IP attempt limit on POST /api/auth/login
 	trustedProxies []netip.Prefix // BARTEX_TRUSTED_PROXIES; see clientIP
 
+	// mcpTokens scopes bearer tokens for the governed BARTEX Tools MCP server
+	// (/api/harness-mcp): each token binds an external harness session to one task.
+	mcpTokens *mcpTokenStore
+
 	// concMu serializes concurrency-cap decisions (admission + reconcile) so a
 	// scheduler tick and an HTTP settings change / task creation can't both count
 	// free slots off the same snapshot and over-promote past the limit.
@@ -167,7 +171,7 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		profChatAgents: map[int64]*agent.ChatAgent{},
 		provByProfile:  map[int64]*provEntry{},
 		taskAgents:     map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1),
-		loginLimit: newLoginLimiter(time.Now)}
+		loginLimit: newLoginLimiter(time.Now), mcpTokens: newMCPTokenStore()}
 	s.llmHealth, s.llmHealthSync = newLLMHealthRegistry(ctx, m.pg)
 	for _, o := range opts {
 		o(s)
@@ -742,6 +746,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/task-templates", s.pgCreateTaskTemplate)
 	mux.HandleFunc("PATCH /api/task-templates/{id}", s.pgUpdateTaskTemplate)
 	mux.HandleFunc("DELETE /api/task-templates/{id}", s.pgDeleteTaskTemplate)
+	mux.HandleFunc("POST /api/tasks/{id}/mcp-token", s.mintTaskMCPToken)
 	mux.HandleFunc("GET /api/tasks/{id}", s.getTask)
 	mux.HandleFunc("GET /api/tasks/{id}/outcome", s.taskOutcome)
 	mux.HandleFunc("GET /api/tasks/{id}/lessons", s.taskLessons)
@@ -1038,6 +1043,12 @@ func (s *Server) Handler() http.Handler {
 	api := cors(s.requireAuth(mux))
 	root := http.NewServeMux()
 	root.Handle("/api/", api)
+	// The governed BARTEX Tools MCP server authenticates on its own task-scoped
+	// bearer token (the SessionBinder), so it is mounted outside the operator-JWT
+	// requireAuth wrapper. The more specific pattern wins over "/api/". It lives at
+	// /api/harness-mcp, NOT /api/mcp — the latter is the operator MCP-servers
+	// management API.
+	root.Handle("/api/harness-mcp", s.mcpHandler())
 	root.Handle("/", s.webuiHandler())
 	return limitRequestBody(root)
 }
