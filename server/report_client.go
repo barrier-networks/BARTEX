@@ -86,13 +86,13 @@ func (s *Server) getTaskReportPDF(w http.ResponseWriter, r *http.Request) {
 	pdf, err := report.RenderPDF(r.Context(), []byte(html))
 	if err != nil {
 		if errors.Is(err, report.ErrNoBrowser) {
-			writeErr(w, 501, "PDF rendering is unavailable: no Chromium binary was found. Use the HTML report (report.html), or set BARRIER_CHROMIUM to a Chromium executable.")
+			writeErr(w, 501, "PDF rendering is unavailable: no Chromium binary was found. Use the HTML report (report.html), or set BARTEX_CHROMIUM to a Chromium executable.")
 			return
 		}
 		writeErr(w, 500, err.Error())
 		return
 	}
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", `attachment; filename="barrier-report-task-`+id+`.pdf"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="bartex-report-task-`+id+`.pdf"`)
 	_, _ = w.Write(pdf)
 }

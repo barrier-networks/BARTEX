@@ -38,13 +38,13 @@ func (f *fakeToolset) Call(_ context.Context, name string, args json.RawMessage)
 // blockHost is non-empty, the guard blocks any call whose args contain it (a
 // stand-in for a scope/RoE block).
 func newTestServer(base Toolset, blockMarker string) *Server {
-	return New("barrier-test", "0.0.1", func(token string) (Toolset, bool) {
+	return New("bartex-test", "0.0.1", func(token string) (Toolset, bool) {
 		if token != "good" {
 			return nil, false
 		}
 		return GuardedToolset{Base: base, Guard: func(_ context.Context, _ string, args json.RawMessage) error {
 			if blockMarker != "" && strings.Contains(string(args), blockMarker) {
-				return errors.New("[Barrier platform control, not target defense] ENGAGEMENT_OUT_OF_SCOPE: blocked")
+				return errors.New("[BARTEX platform control, not target defense] ENGAGEMENT_OUT_OF_SCOPE: blocked")
 			}
 			return nil
 		}}, true
@@ -80,7 +80,7 @@ func TestInitialize(t *testing.T) {
 		t.Errorf("protocolVersion = %v", result["protocolVersion"])
 	}
 	si, _ := result["serverInfo"].(map[string]any)
-	if si["name"] != "barrier-test" {
+	if si["name"] != "bartex-test" {
 		t.Errorf("serverInfo.name = %v", si["name"])
 	}
 }

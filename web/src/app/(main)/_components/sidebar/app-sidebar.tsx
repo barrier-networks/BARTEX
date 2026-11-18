@@ -41,10 +41,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild size="lg">
               <Link prefetch={false} href="/function/tasks">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.svg" alt="AdversaryOps" width={40} height={40} className="shrink-0 dark:brightness-0 dark:invert" />
+                <img src="/logo.svg" alt="AdversaryOps" width={32} height={32} className="size-8 shrink-0 dark:brightness-0 dark:invert" />
                 <span className="font-semibold text-base">{APP_CONFIG.name}</span>
               </Link>
             </SidebarMenuButton>

@@ -18,7 +18,7 @@ func TestScrubSecretEnvHidesSecretsFromChildren(t *testing.T) {
 	for _, k := range secretEnv {
 		t.Setenv(k, "leak-"+k)
 	}
-	t.Setenv("BARRIER_SCRUB_KEEP", "kept")
+	t.Setenv("BARTEX_SCRUB_KEEP", "kept")
 
 	ScrubSecretEnv()
 
@@ -32,7 +32,7 @@ func TestScrubSecretEnvHidesSecretsFromChildren(t *testing.T) {
 			t.Errorf("%s still reaches child processes", k)
 		}
 	}
-	if !strings.Contains(env, "\nBARRIER_SCRUB_KEEP=kept\n") {
+	if !strings.Contains(env, "\nBARTEX_SCRUB_KEEP=kept\n") {
 		t.Errorf("non-secret variable did not reach the child process")
 	}
 }
@@ -43,10 +43,10 @@ func TestScrubSecretEnvHidesSecretsFromChildren(t *testing.T) {
 func TestNewAppliesSecretScrubOption(t *testing.T) {
 	// t.Setenv restores both after the test: the scrub unsets them for the rest
 	// of this process, and later tests still need the DSN.
-	if dsn := os.Getenv("BARRIER_PG_DSN"); dsn != "" {
-		t.Setenv("BARRIER_PG_DSN", dsn)
+	if dsn := os.Getenv("BARTEX_PG_DSN"); dsn != "" {
+		t.Setenv("BARTEX_PG_DSN", dsn)
 	}
-	t.Setenv("BARRIER_SECRET_KEY", os.Getenv("BARRIER_SECRET_KEY"))
+	t.Setenv("BARTEX_SECRET_KEY", os.Getenv("BARTEX_SECRET_KEY"))
 	t.Setenv("ANTHROPIC_API_KEY", "scrub-probe")
 	t.Setenv("OPENAI_API_KEY", "scrub-probe")
 

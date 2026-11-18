@@ -12,9 +12,9 @@ func countingFetch(tag string, err error, calls *int) func(context.Context) (str
 }
 
 func TestUpdateCheckOffByDefault(t *testing.T) {
-	t.Setenv("BARRIER_UPDATE_CHECK", "")
+	t.Setenv("BARTEX_UPDATE_CHECK", "")
 	if updateCheckEnabled() {
-		t.Fatal("update check must be off when BARRIER_UPDATE_CHECK is unset")
+		t.Fatal("update check must be off when BARTEX_UPDATE_CHECK is unset")
 	}
 	calls := 0
 	u := &updateCheck{enabled: false, fetch: countingFetch("v9.9.9", nil, &calls)}

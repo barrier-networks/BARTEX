@@ -34,13 +34,13 @@ function isFullBleed(pathname: string) {
 }
 
 const RELEASES_URL = "https://github.com/barrier-networks/bartex/releases";
-const UPDATE_DISMISSED_KEY = "barrier-update-dismissed";
+const UPDATE_DISMISSED_KEY = "bartex-update-dismissed";
 
 export function MainContent({ children }: { children: ReactNode }) {
   const currentUser = useCurrentUser();
   const pathname = usePathname();
   const [version, setVersion] = useState("");
-  // Only set when the backend has the opt-in update check on (BARRIER_UPDATE_CHECK) and found a newer release.
+  // Only set when the backend has the opt-in update check on (BARTEX_UPDATE_CHECK) and found a newer release.
   const [latest, setLatest] = useState("");
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function MainContent({ children }: { children: ReactNode }) {
   const updateBanner = latest ? (
     <div className="flex shrink-0 items-center justify-center gap-2 border-b bg-muted/50 px-4 py-1 text-xs">
       <a href={RELEASES_URL} target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">
-        Barrier {latest} is available. See the release notes.
+        BARTEX {latest} is available. See the release notes.
       </a>
       <button
         type="button"

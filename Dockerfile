@@ -31,16 +31,16 @@ RUN go mod download
 COPY . .
 # Reuse the frontend built above; build.sh skips its own frontend step.
 COPY --from=web /src/web/out ./server/webui/dist
-ARG BARRIER_VERSION=dev
+ARG BARTEX_VERSION=dev
 ARG TARGETOS
 ARG TARGETARCH
-# Same flags as the release binaries job (BARRIER_COMPRESS=0, -trimpath,
+# Same flags as the release binaries job (BARTEX_COMPRESS=0, -trimpath,
 # -X main.version), driven through build.sh so there is one build path.
-RUN BARRIER_SKIP_FRONTEND=1 \
-    BARRIER_SKIP_NPM_CI=1 \
-    BARRIER_COMPRESS=0 \
-    BARRIER_OUTPUT=/out/barrier \
-    BARRIER_BUILD_VERSION="${BARRIER_VERSION}" \
+RUN BARTEX_SKIP_FRONTEND=1 \
+    BARTEX_SKIP_NPM_CI=1 \
+    BARTEX_COMPRESS=0 \
+    BARTEX_OUTPUT=/out/bartex \
+    BARTEX_BUILD_VERSION="${BARTEX_VERSION}" \
     bash ./build.sh --target "${TARGETOS:-linux}/${TARGETARCH:-amd64}"
 
 # ------------------------------------------------------- third-party tools ---
@@ -140,7 +140,7 @@ RUN set -eux; \
     ffuf -V >/dev/null; dalfox --version >/dev/null; sqlmap --version >/dev/null
 
 # bbot recursive recon orchestrator (#117): blacklanternsecurity/bbot, AGPL-3.0
-# (same license as Barrier; standalone CLI dependency, not linked code). Pinned
+# (same license as BARTEX; standalone CLI dependency, not linked code). Pinned
 # version, own venv to isolate from the image python. Module dependencies are
 # preinstalled (--install-all-deps) so scans never need pip at runtime, which
 # would fail under a program's egress allowlist.
@@ -196,14 +196,14 @@ RUN npm install -g "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # Binary compiled from source in the build stage above.
-COPY --from=build /out/barrier /app/barrier
+COPY --from=build /out/bartex /app/bartex
 # Daemon startup script: relaunches the process after a crash and forwards SIGTERM
-# to barrier — docker stop only signals PID 1; without forwarding, barrier never receives it,
+# to bartex — docker stop only signals PID 1; without forwarding, bartex never receives it,
 # cannot shut down gracefully, and is hard-killed by SIGKILL after 10 seconds.
 COPY start.sh /app/start.sh
-RUN chmod +x /app/barrier /app/start.sh && mkdir -p /app/keys
+RUN chmod +x /app/bartex /app/start.sh && mkdir -p /app/keys
 COPY skills/ /app/skills/
-# persistence points: data/ (traffic index, task files, transcripts) and keys/ (jwt.key, secret.key, via BARRIER_JWT_KEY_DIR)
+# persistence points: data/ (traffic index, task files, transcripts) and keys/ (jwt.key, secret.key, via BARTEX_JWT_KEY_DIR)
 VOLUME ["/app/data", "/app/keys"]
 EXPOSE 8787 8788
 ENTRYPOINT ["/app/start.sh"]

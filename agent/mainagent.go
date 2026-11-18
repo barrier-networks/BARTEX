@@ -165,7 +165,7 @@ func (m *MainAgent) Chat(ctx context.Context, taskID int64, mainSeg int, as *db.
 		NonStreaming: m.nonStreaming(), // when this profile selects non-streaming, use Provider.Complete
 		MaxTokens:    m.maxTokens(),    // 0 = send no cap, the server's default decides
 
-		// On by default; BARRIER_UNTRUSTED_BOUNDARY=0 opts out: nonce-frame tool output as untrusted data.
+		// On by default; BARTEX_UNTRUSTED_BOUNDARY=0 opts out: nonce-frame tool output as untrusted data.
 		UntrustedOutputBoundary: untrustedBoundaryEnabled(),
 	}
 	if hooks != nil { // typed-nil guard: only set when concrete (avoids harness panic)

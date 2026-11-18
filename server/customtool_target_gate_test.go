@@ -522,7 +522,7 @@ func TestDenyRuleWinsBeforeRenderedTarget(t *testing.T) {
 	if err := ic.SetEnabledTools(append(slices.Clone(prior), "probe_http")); err != nil {
 		t.Fatal(err)
 	}
-	const sentinel = "BARRIER_RENDERED_DENY_PROBE"
+	const sentinel = "BARTEX_RENDERED_DENY_PROBE"
 	rule, err := pg.CreateInterceptRule("rendered deny probe", "tool_input", "string", sentinel, "deny", "", 1000000, true, false, 0, "deny")
 	if err != nil {
 		t.Fatal(err)

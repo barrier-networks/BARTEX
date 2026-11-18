@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Barrier is an autonomous penetration-testing tool. Security fixes are provided only for the latest official release line. The `main` branch is not considered a stable release and may change at any time.
+BARTEX is an autonomous penetration-testing tool. Security fixes are provided only for the latest official release line. The `main` branch is not considered a stable release and may change at any time.
 
 Only the latest release line receives security fixes. Older releases do not receive fixes; please upgrade to the latest release.
 
@@ -18,7 +18,7 @@ Report through **GitHub Security Advisories**: **Security** tab → **Report a v
 
 Please include:
 - A description of the vulnerability and its expected impact.
-- The Barrier version and/or commit hash.
+- The BARTEX version and/or commit hash.
 - Runtime environment (OS, Docker/local, PostgreSQL, LLM provider, etc.).
 - Minimal reproduction steps (PoC).
 - Logs, screenshots, or sample traffic with **sensitive data removed**.
@@ -28,8 +28,8 @@ Please include:
 
 ## Scope and Authorized Testing
 
-Barrier is an offensive-security tool. Test only against:
-- Your own Barrier deployment in a lab or local environment;
+BARTEX is an offensive-security tool. Test only against:
+- Your own BARTEX deployment in a lab or local environment;
 - Systems you own;
 - Targets explicitly authorized in writing (bug bounty, pentest contract, etc.).
 
@@ -51,21 +51,21 @@ This is an open-source project maintained on a best-effort basis. We aim to ackn
 
 We will explain the reason, for example:
 - It is not a security vulnerability but intended behavior.
-- It is outside Barrier’s scope (e.g., an issue in an LLM provider, PostgreSQL, Docker, or a browser).
+- It is outside BARTEX’s scope (e.g., an issue in an LLM provider, PostgreSQL, Docker, or a browser).
 - There is insufficient information to reproduce it.
-- The report only states that “the tool can be misused” without identifying a specific technical flaw in Barrier.
+- The report only states that “the tool can be misused” without identifying a specific technical flaw in BARTEX.
 
 Where appropriate, we may convert the report into a public hardening issue or feature request.
 
 ## Out of Scope
 
-The following are generally **not** considered Barrier security vulnerabilities:
+The following are generally **not** considered BARTEX security vulnerabilities:
 - Attacks or scans against systems you do not own or are not authorized to test.
 - Self-XSS, spam, or brute-force without real impact.
 - Large-scale DoS/DDoS or resource-exhaustion attacks.
 - Social engineering targeting maintainers or users.
-- Issues that exist only in third-party dependencies and do not affect Barrier.
-- Reports that “Barrier can be used to attack systems” when the user has valid authorization — this is the nature of a penetration-testing tool, not a vulnerability.
+- Issues that exist only in third-party dependencies and do not affect BARTEX.
+- Reports that “BARTEX can be used to attack systems” when the user has valid authorization — this is the nature of a penetration-testing tool, not a vulnerability.
 - Missing headers or hardening configuration without a concrete security impact.
 
 ## Safe Harbor
@@ -78,4 +78,4 @@ We welcome ethical security research. If you follow this policy and test only wi
 - Do not publish a public PoC without maintainer consent.
 - If you do not receive a response within a reasonable time, please ping the contact channel above before disclosing.
 
-Thank you for helping make Barrier safer.
+Thank you for helping make BARTEX safer.

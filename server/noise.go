@@ -9,17 +9,17 @@ import (
 )
 
 // startupNoiseProfile is the noise profile to apply at startup: the stored
-// noise_profile setting when there is a valid one, else BARRIER_NOISE_PROFILE.
+// noise_profile setting when there is a valid one, else BARTEX_NOISE_PROFILE.
 func startupNoiseProfile(pg *db.DB) egress.Profile {
 	v, ok, err := pg.GetSetting(settingNoiseProfile)
 	if err != nil {
-		log.Printf("[egress] read %s setting: %v; using BARRIER_NOISE_PROFILE", settingNoiseProfile, err)
+		log.Printf("[egress] read %s setting: %v; using BARTEX_NOISE_PROFILE", settingNoiseProfile, err)
 	}
 	if ok {
 		if p, valid := egress.ProfileByName(v); valid {
 			return p
 		}
-		log.Printf("[egress] stored %s=%q is not off, quiet, balanced or aggressive; using BARRIER_NOISE_PROFILE", settingNoiseProfile, v)
+		log.Printf("[egress] stored %s=%q is not off, quiet, balanced or aggressive; using BARTEX_NOISE_PROFILE", settingNoiseProfile, v)
 	}
 	return egress.ProfileFromEnv()
 }

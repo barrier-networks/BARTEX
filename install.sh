@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Barrier install script: 1) all-Docker  2) local build & run
+# BARTEX install script: 1) all-Docker  2) local build & run
 set -euo pipefail
 cd "$(cd "$(dirname "$0")" && pwd)"
 
@@ -58,7 +58,7 @@ install_docker(){
   info "building the image from this checkout and starting..."
   docker compose up -d --build
   ok "started → http://localhost:8787"
-  info "view logs: docker compose logs -f barrier"
+  info "view logs: docker compose logs -f bartex"
 }
 
 # ── 2) Local build & run ──────────────────────────────
@@ -70,16 +70,16 @@ install_local(){
     2)
       ensure_docker
       local pw; pw="$(ask 'Postgres password (press Enter for random)' "$(rand)")"
-      docker run -d --name barrier-pg -p 5432:5432 \
-        -e POSTGRES_USER=barrier -e POSTGRES_PASSWORD="$pw" -e POSTGRES_DB=barrier \
-        -v barrier-pg:/var/lib/postgresql/data postgres:16-alpine
-      DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=barrier DB_PASS="$pw" DB_NAME=barrier DB_SSL=disable ;;
+      docker run -d --name bartex-pg -p 5432:5432 \
+        -e POSTGRES_USER=bartex -e POSTGRES_PASSWORD="$pw" -e POSTGRES_DB=bartex \
+        -v bartex-pg:/var/lib/postgresql/data postgres:16-alpine
+      DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=bartex DB_PASS="$pw" DB_NAME=bartex DB_SSL=disable ;;
     *)
       DB_HOST="$(ask 'Database host' 127.0.0.1)"
       DB_PORT="$(ask 'Port' 5432)"
-      DB_USER="$(ask 'User' barrier)"
+      DB_USER="$(ask 'User' bartex)"
       DB_PASS="$(ask 'Password' '')"
-      DB_NAME="$(ask 'Database name' barrier)"
+      DB_NAME="$(ask 'Database name' bartex)"
       DB_SSL="$(ask 'sslmode (disable/require)' disable)" ;;
   esac
 
@@ -109,19 +109,19 @@ JSON
     ( cd web && npm ci && npm run build:static )
     rm -rf server/webui/dist && cp -r web/out server/webui/dist
     info "compiling embedded single binary..."
-    CGO_ENABLED=0 go build -tags embedui -trimpath -o barrier ./cmd/barrier
+    CGO_ENABLED=0 go build -tags embedui -trimpath -o bartex ./cmd/bartex
   else
     warn "npm not detected: building a backend WITHOUT the embedded frontend (run npm run dev separately for the frontend)"
-    CGO_ENABLED=0 go build -o barrier ./cmd/barrier
+    CGO_ENABLED=0 go build -o bartex ./cmd/bartex
   fi
-  ok "build complete → ./barrier"
+  ok "build complete → ./bartex"
 
   info "starting... (Ctrl-C to exit)"
-  ./barrier
+  ./bartex
 }
 
 echo "=============================="
-echo "  Barrier Install"
+echo "  BARTEX Install"
 echo "  1) All-Docker install"
 echo "  2) Run locally (go build)"
 echo "=============================="

@@ -1,25 +1,25 @@
 # Design: external-harness execution backend
 
 Status: **design + Phase 0 (substrate) started.** This document scopes letting a
-Barrier worker intent be executed by an **external agentic harness** (Claude
+BARTEX worker intent be executed by an **external agentic harness** (Claude
 Code, Codex, Aider, …) instead of the built-in `norma/agentcore` loop, without
-losing the governance and evidence guarantees that are the point of Barrier.
+losing the governance and evidence guarantees that are the point of BARTEX.
 
 ---
 
 ## 1. Motivation & non-goal
 
 - **Motivation:** teams already run mature agentic CLIs locally and want to point
-  Barrier at them — to reuse their tooling and model access, and to pick the
+  BARTEX at them — to reuse their tooling and model access, and to pick the
   loop that suits a job. Combined with the local-model work (Ollama /
-  OpenAI-compatible endpoints), this lets Barrier run against "the same backend
+  OpenAI-compatible endpoints), this lets BARTEX run against "the same backend
   my Claude Code / Codex setup uses."
 - **Non-goal:** replacing `norma/agentcore` as the default. The built-in loop
   stays; the external harness is an **opt-in alternative backend** for a worker.
 
 ## 2. The one constraint that decides the design
 
-Barrier's value is **not the loop** — it is the governance and evidence *around*
+BARTEX's value is **not the loop** — it is the governance and evidence *around*
 it. Today every worker runs through `agentcore.NewSession(opts)` with two
 enforcement layers:
 
@@ -46,7 +46,7 @@ and evidence invariant when we do not own the loop,"** not "launch Claude Code."
   `agent.ToolSet`; the model from the resolved LLM profile.
 - Tools: `tool.CoreTool` (name, description, `InputSchema()`, execute). Curated
   per agent; plus custom tools and **consumed** MCP tools (`mcphttp`, norma's
-  `mcp` **client**). Barrier does **not** currently expose an MCP server.
+  `mcp` **client**). BARTEX does **not** currently expose an MCP server.
 - Governance choke point: `guard/guard.go:applyIntercept`, threaded via
   `intercept.TargetScope` (incl. the new `Engagement` policy).
 - Evidence: the `intercept` recording proxy + `egress` + traffic-binding to
@@ -56,7 +56,7 @@ and evidence invariant when we do not own the loop,"** not "launch Claude Code."
 
 | Approach | How the harness acts | Governance | Evidence |
 |---|---|---|---|
-| **A — Governed tools over MCP** | Barrier **exposes** its curated catalog as an **MCP server**; the harness connects and its **native tools are disabled** — it may only call Barrier tools | **Full** — every action still hits `applyIntercept` + RoE + target gate | **Full** — tools write assets/findings/traffic-bindings as today |
+| **A — Governed tools over MCP** | BARTEX **exposes** its curated catalog as an **MCP server**; the harness connects and its **native tools are disabled** — it may only call BARTEX tools | **Full** — every action still hits `applyIntercept` + RoE + target gate | **Full** — tools write assets/findings/traffic-bindings as today |
 | **B — Sandboxed harness behind the proxy** | Harness keeps its own tools, but runs in a locked sandbox with **all egress forced through the recording/scope proxy**, FS confined to the task workdir | **Network-level only** (scope + capture at the wire; argv-approval / budgets weaker) | **Full at the network layer**; thinner graph write-back |
 | **C — A + B (recommended)** | Governed MCP tools as the surface, **plus** the egress proxy as a hard backstop | **Full**, defence-in-depth | **Full** |
 
@@ -66,23 +66,23 @@ what makes A safe against "the harness had a native tool we forgot to disable."
 
 ## 5. Recommended design (C)
 
-- **Barrier Tools MCP server** (Phase 0): expose the governed catalog
+- **BARTEX Tools MCP server** (Phase 0): expose the governed catalog
   (recon / http / `insert_assets` / `record_fact` / `report_finding` /
   scoped-bash / …) over MCP (Streamable HTTP; stdio later). Each call runs the
   **same** `applyIntercept` hook and the **same** write-back, so scope, deny,
   RoE engagement, target pins, budgets and evidence binding all hold unchanged.
   Independently useful: any MCP client (incl. Claude Code) can then drive a
-  **governed** Barrier engagement.
+  **governed** BARTEX engagement.
 - **`harness` worker backend** (Phase 1+): a *harness profile* (alongside LLM
   profiles) describing how to launch an external CLI (command, args, env, the
-  Barrier MCP endpoint, "native tools off" flags). Worker dispatch spawns it in
+  BARTEX MCP endpoint, "native tools off" flags). Worker dispatch spawns it in
   the task's sandboxed workdir, injects the intent as the prompt, points it at
-  the Barrier Tools MCP server, and forces egress through the recording proxy.
+  the BARTEX Tools MCP server, and forces egress through the recording proxy.
 - **Budgets/termination:** external token accounting differs — enforce via
   turn/time caps + the noise governor + killing the subprocess at budget;
   documented as **coarser** than native budgets.
 - **Transcript/evidence:** the harness transcript is captured as the session
-  log; findings/assets/traffic still bind because actions are Barrier tool calls.
+  log; findings/assets/traffic still bind because actions are BARTEX tool calls.
 
 ## 6. Security analysis (the crux)
 
@@ -109,7 +109,7 @@ it **must not** run without Option B's sandbox.
 
 ## 8. Phased plan
 
-- **Phase 0 — Barrier Tools MCP server.** Substrate (this change): a
+- **Phase 0 — BARTEX Tools MCP server.** Substrate (this change): a
   self-contained `mcpserver` package — a minimal, correct MCP Streamable-HTTP /
   JSON-RPC server (`initialize`, `tools/list`, `tools/call`), bearer auth,
   session management, and a **`GuardedToolset`** governance seam. Next: mount at

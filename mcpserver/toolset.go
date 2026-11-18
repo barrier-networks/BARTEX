@@ -24,7 +24,7 @@ type ToolResult struct {
 
 // Toolset is the set of tools one MCP session may list and call. An
 // implementation binds the session to whatever context scopes those tools (a
-// Barrier task and its engagement/scope).
+// BARTEX task and its engagement/scope).
 type Toolset interface {
 	List(ctx context.Context) []ToolDef
 	Call(ctx context.Context, name string, arguments json.RawMessage) (ToolResult, error)

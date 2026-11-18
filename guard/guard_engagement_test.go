@@ -56,7 +56,7 @@ func TestEngagementStepBlocks(t *testing.T) {
 		for _, gate := range []bool{false, true} {
 			// Window closed → block, regardless of the gate.
 			block, msg := pre(mk(), engagementCtx("7", closed, gate), "WebFetch", engFetchApp)
-			if !block || !strings.HasPrefix(msg, "[Barrier platform control, not target defense] "+intercept.EngagementWindowClosed+": ") {
+			if !block || !strings.HasPrefix(msg, "[BARTEX platform control, not target defense] "+intercept.EngagementWindowClosed+": ") {
 				t.Fatalf("%s gate=%v: window-closed block=%v msg=%q", name, gate, block, msg)
 			}
 			// Out-of-scope target → block, regardless of the gate.

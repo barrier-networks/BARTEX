@@ -1,7 +1,7 @@
-# Barrier — rebrand & build plan
+# BARTEX — rebrand & build plan
 
 This document records the transformation of the upstream **ARTEX** autonomous
-penetration-testing platform into **Barrier** (Barrier Networks), what landed in
+penetration-testing platform into **BARTEX** (Barrier Networks), what landed in
 this pass, what is partial, and the scoped next steps. It is written for an
 engineering audience picking the work up.
 
@@ -17,7 +17,7 @@ engineering audience picking the work up.
   reporting**, **new/upgraded skills**, **scoping / RoE enforcement**.
 - Guardrails honoured: do **not** disturb the LLM provider/rotation engine, do
   **not** weaken the core safety gates, keep DB migrations **additive**.
-- Delivery bar: a working, building, rebranded Barrier + a plan for the rest.
+- Delivery bar: a working, building, rebranded BARTEX + a plan for the rest.
 
 ---
 
@@ -26,18 +26,18 @@ engineering audience picking the work up.
 ### 2.1 Rebrand ✅
 - Go module `github.com/Autumn-27/artex` → `github.com/barrier-networks/bartex`
   (all imports, `go.mod`).
-- Binary + command dir `cmd/artex` → `cmd/barrier` (binary name `barrier`);
+- Binary + command dir `cmd/artex` → `cmd/bartex` (binary name `bartex`);
   `build.sh`, `Dockerfile`, `docker-compose*.yml`, `start.sh`/`start.bat`,
   install/update/dev/reset scripts, CI workflows, `.env.example`,
   `config.example.json` all rebranded.
-- Environment variables `ARTEX_*` → `BARRIER_*`, with a **backward-compat shim**
-  (`config.ApplyLegacyEnv`, called first in `cmd/barrier/main.go`) that mirrors
-  any legacy `ARTEX_*` value to its `BARRIER_*` equivalent, so existing
+- Environment variables `ARTEX_*` → `BARTEX_*`, with a **backward-compat shim**
+  (`config.ApplyLegacyEnv`, called first in `cmd/bartex/main.go`) that mirrors
+  any legacy `ARTEX_*` or interim `BARRIER_*` value to its `BARTEX_*` equivalent, so existing
   deployments keep working unchanged.
 - User-facing surfaces: startup banner, health `service` id, MCP client id,
-  update-check repository, operator identity (`"ARTEX"` → `"Barrier"`, the login
+  update-check repository, operator identity (`"ARTEX"` → `"BARTEX"`, the login
   username / audit `DecidedBy`/`Approver`), the model-facing platform-control
-  framing (`[Barrier platform control, not target defense]`), and the web UI
+  framing (`[BARTEX platform control, not target defense]`), and the web UI
   (product name/title, login/setup, logo).
 - **Verified:** full Go test suite green against PostgreSQL 16; static Next.js
   build compiles.
@@ -64,7 +64,7 @@ engineering audience picking the work up.
   dark) with the Cobalt→Deep gradient on the login/setup panels.
 - **The console carries the AdversaryOps offering:**
   - Product name/title → **AdversaryOps** (`app-config`, login, setup, sidebar);
-    the operator *username* stays `Barrier` (backend-asserted).
+    the operator *username* stays `BARTEX` (backend-asserted).
   - **Logo: the real AdversaryOps mark**, downloaded from the brand Figma
     (node `99:86`, "Supplied White · original SVG geometry") and used verbatim
     at `web/public/logo.svg` (+ raster) — not a recreation. Painted in the core
@@ -134,9 +134,9 @@ existing findings:
   severity breakdown and risk narrative, scope & methodology (OWASP / NIST
   SP 800-115 / NCSC CAF), a findings summary table with CVSS, and detailed
   findings (CVSS, status, verification, PoE, summary, evidence, captured
-  traffic). Barrier logo + brand palette.
+  traffic). BARTEX logo + brand palette.
 - `report/pdf.go` — renders the HTML to **PDF via headless Chromium**
-  (discovered at `BARRIER_CHROMIUM` → `/opt/pw-browsers/chromium` → PATH); no Go
+  (discovered at `BARTEX_CHROMIUM` → `/opt/pw-browsers/chromium` → PATH); no Go
   dependency added. Verified end-to-end (a real PDF is produced in this
   environment).
 - Routes: `GET /api/tasks/{id}/report.html` (always available) and
@@ -168,7 +168,7 @@ Four detailed design/research docs were produced and drive the feature work:
 ## 4. Verification notes
 
 - A local PostgreSQL 16 cluster was stood up to run the DB-backed test suite
-  (the container ships only the `psql` client). `BARRIER_PG_DSN` points at it.
+  (the container ships only the `psql` client). `BARTEX_PG_DSN` points at it.
 - Full Go suite: **green**. Static web build: **compiles**.
 - The Docker image build was **not** exercised (no Docker daemon in the build
   environment) — a CI/image build should be run before release.
@@ -177,7 +177,7 @@ Four detailed design/research docs were produced and drive the feature work:
 
 ## 5. Prioritised follow-ups
 
-1. Drop in the **official Barrier logo mark** (export from the brand Figma —
+1. Drop in the **official BARTEX logo mark** (export from the brand Figma —
    blocked by the egress proxy this session) and refresh `favicon.ico`; the
    palette/fonts are already applied from the guidelines.
 2. Add the remaining cloud/infra tools to the Dockerfile tools stage (Pacu is

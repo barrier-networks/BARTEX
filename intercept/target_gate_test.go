@@ -835,7 +835,7 @@ func TestStoredExemptionOnIPLiteral(t *testing.T) {
 	}
 	// The API refuses them before anything is stored (no database behind g.ic).
 	for _, ip := range never {
-		if _, _, err := g.ic.SetExemptions([]db.TargetExemption{{Host: ip, Port: 8080}}, "Barrier"); !errors.Is(err, ErrInvalidExemption) {
+		if _, _, err := g.ic.SetExemptions([]db.TargetExemption{{Host: ip, Port: 8080}}, "BARTEX"); !errors.Is(err, ErrInvalidExemption) {
 			t.Errorf("SetExemptions(%s) = %v, want it refused", ip, err)
 		}
 	}
@@ -845,7 +845,7 @@ func TestStoredExemptionOnIPLiteral(t *testing.T) {
 		{Host: "pypi.org", Port: 0}, {Host: "pypi.org", Port: 65536}, {Host: "pypi.org", Port: -1},
 		{Host: "2130706433", Port: 80}, {Host: "0x7f.1", Port: 80}, {Host: "::ffff:127.0.0.1", Port: 80},
 	} {
-		if _, _, err := g.ic.SetExemptions([]db.TargetExemption{{Host: "pypi.org", Port: 443}, bad}, "Barrier"); !errors.Is(err, ErrInvalidExemption) {
+		if _, _, err := g.ic.SetExemptions([]db.TargetExemption{{Host: "pypi.org", Port: 443}, bad}, "BARTEX"); !errors.Is(err, ErrInvalidExemption) {
 			t.Errorf("SetExemptions(%+v) = %v, want it refused", bad, err)
 		}
 	}

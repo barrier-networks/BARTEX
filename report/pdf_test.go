@@ -11,7 +11,7 @@ import (
 // engine and checks the output is a PDF. It skips where no browser is installed
 // so it is safe in CI/air-gapped environments.
 func TestRenderPDFSmoke(t *testing.T) {
-	pdf, err := RenderPDF(context.Background(), []byte("<!doctype html><html><body><h1>Barrier</h1></body></html>"))
+	pdf, err := RenderPDF(context.Background(), []byte("<!doctype html><html><body><h1>BARTEX</h1></body></html>"))
 	if errors.Is(err, ErrNoBrowser) {
 		t.Skip("no Chromium available for PDF rendering")
 	}

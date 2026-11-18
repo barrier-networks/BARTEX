@@ -11,7 +11,7 @@ improver) comes from the awesome-rsi list (lobehub).
 
 ## Modes
 
-`BARRIER_RSI_LESSONS` is read when a task's agent bundle is built:
+`BARTEX_RSI_LESSONS` is read when a task's agent bundle is built:
 
 | value | behavior |
 |---|---|
