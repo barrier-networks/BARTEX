@@ -101,9 +101,9 @@ func TestEngagementAllowDenyIntersection(t *testing.T) {
 	p := active([]EngagementNet{domainNet("example.com"), cidrNet("203.0.113.0/24")},
 		[]EngagementNet{domainNet("secret.example.com")})
 
-	wantCode(t, p, "WebFetch", webApp, "")                     // app.example.com ⊆ example.com
-	wantCode(t, p, "Bash", nmapIP, "")                         // 203.0.113.7 ∈ 203.0.113.0/24
-	wantCode(t, p, "Bash", nmapCIDR, "")                       // 203.0.113.0/28 ⊆ 203.0.113.0/24
+	wantCode(t, p, "WebFetch", webApp, "") // app.example.com ⊆ example.com
+	wantCode(t, p, "Bash", nmapIP, "")     // 203.0.113.7 ∈ 203.0.113.0/24
+	wantCode(t, p, "Bash", nmapCIDR, "")   // 203.0.113.0/28 ⊆ 203.0.113.0/24
 	// evil.example.org matches no domain allow, but a CIDR allow row is present, so
 	// without DNS it cannot be ruled out → ambiguous (fail safe).
 	wantCode(t, p, "WebFetch", webOther, EngagementAmbiguous)
