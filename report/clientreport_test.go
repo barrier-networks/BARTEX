@@ -26,11 +26,11 @@ func TestClientReportHTML(t *testing.T) {
 		t.Fatalf("ClientReportHTML: %v", err)
 	}
 	for _, want := range []string{
-		"CONFIDENTIAL",    // default classification
-		"Acme plc",        // client
-		"Acme Web App Q4", // engagement
-		"ROE-2026-014",    // authorisation reference
-		"BARRIER",         // brand
+		"CONFIDENTIAL",     // default classification
+		"Acme plc",         // client
+		"Acme Web App Q4",  // engagement
+		"ROE-2026-014",     // authorisation reference
+		"Barrier Networks", // brand (logo aria-label)
 		"SQL injection in /login",
 		"sev-critical",                  // severity pill class
 		"9.1",                           // indicative CVSS for critical
