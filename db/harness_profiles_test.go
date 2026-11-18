@@ -100,3 +100,40 @@ func containsPlain(haystack, needle string) bool {
 		return false
 	})()
 }
+
+func TestDefaultHarnessProfileID(t *testing.T) {
+	d, err := Open(testDSN(t))
+	if err != nil {
+		t.Skip("no PG for test:", err)
+	}
+	defer d.Close()
+
+	// Unset by default.
+	if id, err := d.DefaultHarnessProfileID(); err != nil || id != nil {
+		t.Fatalf("default should be unset: id=%v err=%v", id, err)
+	}
+	// Setting a non-existent profile is rejected.
+	bad := int64(999999)
+	if err := d.SetDefaultHarnessProfileID(&bad); err == nil {
+		t.Fatal("setting a missing profile id should fail")
+	}
+	// Create a profile, set it as default, read it back.
+	pid, err := d.SaveHarnessProfile(&HarnessProfile{Name: "dflt", Kind: "codex", Command: "codex", MCPTransport: "stdio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := d.SetDefaultHarnessProfileID(&pid); err != nil {
+		t.Fatal(err)
+	}
+	if id, err := d.DefaultHarnessProfileID(); err != nil || id == nil || *id != pid {
+		t.Fatalf("default = %v (err %v), want %d", id, err, pid)
+	}
+	// Clearing returns to unset.
+	if err := d.SetDefaultHarnessProfileID(nil); err != nil {
+		t.Fatal(err)
+	}
+	if id, _ := d.DefaultHarnessProfileID(); id != nil {
+		t.Fatalf("default should be cleared, got %v", id)
+	}
+	_ = d.DeleteHarnessProfile(pid)
+}

@@ -128,18 +128,20 @@ func (s *Server) bindMCPSession(token string) (mcpserver.Toolset, bool) {
 	}
 
 	// Build a task-scoped ToolSet bound to the real stores and the evidence-backed
-	// finding recorder, then expose the worker's executing catalog (the harness's
-	// own native tools do its recon/exploitation; these governed tools are how it
-	// writes assets, facts and findings back into the engagement).
+	// finding recorder, then expose the plan+execute catalog: in whole-task mode
+	// the CLI drives the engagement end to end (shape goals/intents, enumerate,
+	// execute, and report findings) through these governed tools, while its own
+	// native tools do recon/exploitation behind the recording proxy.
 	tsx := agent.NewToolSet(t.Store, "mcp")
 	tid, _ := parseTaskID(taskID)
 	tsx.SetTaskID(tid)
+	tsx.SetOwnerNode(0) // task-level session: assets anchor to the task root, not one intent
 	tsx.SetFindingRecorder(s.evidenceStore())
 	if as := s.m.Assets(); as != nil {
 		tsx.SetAssetStore(as, as.Companies())
 		tsx.SetCoverageEnabled(t.CoverageEnabled)
 	}
-	tools := tsx.WorkerTools()
+	tools := tsx.HarnessLeadTools()
 	if !t.CoverageEnabled {
 		tools = tsx.DropCoverageTools(tools)
 	}

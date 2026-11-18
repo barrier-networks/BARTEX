@@ -26,34 +26,53 @@ import (
 // status / context, and write-back counts are not re-derived (they are used only
 // for logging).
 func (s *Server) runHarnessIntent(ctx context.Context, t *Task, name string, intent *db.Node, emit func(db.Activity)) (nh.TerminalReason, agent.WriteCounts, error) {
-	if t.HarnessProfileID == nil {
-		return nh.ReasonModelError, agent.WriteCounts{}, errors.New("no harness profile on task")
+	reason, err := s.runHarnessSession(ctx, t, name, intent.ID, agent.IntentPrompt(intent), emit)
+	return reason, agent.WriteCounts{}, err
+}
+
+// runHarnessTask runs ONE whole-engagement harness session: the CLI is given the
+// task's goal and situation and the plan+execute governed catalog, and drives the
+// engagement itself (shape goals/intents, enumerate, execute, report findings).
+// It is the whole-task-handoff backend used when a task's effective backend is a
+// harness. activityNode is the task-root node the streamed log lines anchor to.
+func (s *Server) runHarnessTask(ctx context.Context, t *Task, name string, activityNode int64, emit func(db.Activity)) (nh.TerminalReason, error) {
+	return s.runHarnessSession(ctx, t, name, activityNode, s.harnessTaskPrompt(t), emit)
+}
+
+// runHarnessSession is the shared launcher for both the per-intent and the
+// whole-task harness paths: it resolves the task's effective profile, mints a
+// task-scoped MCP token, builds the sandboxed invocation, streams stdout/stderr
+// as activities, and maps the exit/ctx to a terminal reason.
+func (s *Server) runHarnessSession(ctx context.Context, t *Task, name string, activityNode int64, prompt string, emit func(db.Activity)) (nh.TerminalReason, error) {
+	pid := s.effectiveHarnessProfileID(t)
+	if pid == nil {
+		return nh.ReasonModelError, errors.New("no harness profile for task")
 	}
-	prof, err := s.m.pg.HarnessProfileByID(*t.HarnessProfileID)
+	prof, err := s.m.pg.HarnessProfileByID(*pid)
 	if err != nil || prof == nil {
-		return nh.ReasonModelError, agent.WriteCounts{}, errors.New("harness profile not found")
+		return nh.ReasonModelError, errors.New("harness profile not found")
 	}
 
 	sandbox := harness.NewSandbox()
 	if prof.DisableNativeSandbox && !sandbox.Available() {
 		// Fail-safe: the CLI runs with its own sandbox off, so ours MUST confine
 		// it. No sandbox ⇒ do not launch (the design doc's hard rule).
-		emitHarnessLine(emit, intent.ID, name, true, "refusing to launch: no OS sandbox available to confine the harness")
-		return nh.ReasonModelError, agent.WriteCounts{}, harness.ErrSandboxUnavailable
+		emitHarnessLine(emit, activityNode, name, true, "refusing to launch: no OS sandbox available to confine the harness")
+		return nh.ReasonModelError, harness.ErrSandboxUnavailable
 	}
 
 	token, _, err := s.mcpTokens.mint(t.ID)
 	if err != nil {
-		return nh.ReasonModelError, agent.WriteCounts{}, err
+		return nh.ReasonModelError, err
 	}
-	runDir := agent.EnsureRunDir(s.m.DataDir(), intentID64(t), intent.ID)
+	runDir := agent.EnsureRunDir(s.m.DataDir(), taskID64(t), activityNode)
 
 	l := harness.Launch{
 		Kind:                 prof.Kind,
 		Command:              prof.Command,
 		Args:                 prof.Args,
 		Env:                  prof.Env,
-		Prompt:               agent.IntentPrompt(intent),
+		Prompt:               prompt,
 		RunDir:               runDir,
 		SelfExe:              selfExe(),
 		Transport:            prof.MCPTransport,
@@ -64,25 +83,62 @@ func (s *Server) runHarnessIntent(ctx context.Context, t *Task, name string, int
 		MaxDuration:          time.Duration(prof.MaxDurationSeconds) * time.Second,
 	}
 
-	emitHarnessLine(emit, intent.ID, name, false, "launching harness "+prof.Kind+" ("+prof.Command+") in "+sandbox.Name()+" sandbox")
-	lw := &harnessLogWriter{emit: emit, intentID: intent.ID, worker: name}
+	emitHarnessLine(emit, activityNode, name, false, "launching harness "+prof.Kind+" ("+prof.Command+") in "+sandbox.Name()+" sandbox")
+	lw := &harnessLogWriter{emit: emit, intentID: activityNode, worker: name}
 	runErr := l.Run(ctx, sandbox, lw)
 	lw.flush()
 
 	switch {
 	case ctx.Err() != nil:
-		// Pause/kill/deadline cancelled the run: settle like a worker abort.
-		return nh.ReasonAbortedTools, agent.WriteCounts{}, ctx.Err()
+		return nh.ReasonAbortedTools, ctx.Err()
 	case runErr != nil:
-		emitHarnessLine(emit, intent.ID, name, true, "harness exited with error: "+runErr.Error())
-		return nh.ReasonModelError, agent.WriteCounts{}, runErr
+		emitHarnessLine(emit, activityNode, name, true, "harness exited with error: "+runErr.Error())
+		return nh.ReasonModelError, runErr
 	default:
-		emitHarnessLine(emit, intent.ID, name, false, "harness completed")
-		return nh.ReasonCompleted, agent.WriteCounts{}, nil
+		emitHarnessLine(emit, activityNode, name, false, "harness session completed")
+		return nh.ReasonCompleted, nil
 	}
 }
 
-func intentID64(t *Task) int64 {
+// harnessTaskPrompt is the whole-engagement instruction handed to the CLI. The
+// goal and description are authoritative; the governed MCP tools are how it plans
+// and writes back.
+func (s *Server) harnessTaskPrompt(t *Task) string {
+	var b strings.Builder
+	b.WriteString("You are conducting an authorized security engagement. Plan and carry it out yourself using the BARTEX MCP tools (the \"bartex\" server) for all graph state — set and complete goals, add intents, record facts and assets, and report confirmed findings with report_finding.\n\n")
+	b.WriteString("Goal:\n")
+	b.WriteString(strings.TrimSpace(t.Goal))
+	b.WriteString("\n\n")
+	if d := strings.TrimSpace(t.Description); d != "" {
+		b.WriteString("Scope / description:\n")
+		b.WriteString(d)
+		b.WriteString("\n\n")
+	}
+	b.WriteString("Rules: stay strictly within the authorized scope; confirm every finding with concrete evidence before calling report_finding; do only read/enumeration unless the scope explicitly authorizes active testing. When every goal is satisfied, mark it with goal_met and stop. Your own shell/tools run sandbox-confined with all network egress forced through the recording proxy.")
+	return b.String()
+}
+
+// effectiveHarnessProfileID resolves a task's execution backend: its explicit
+// harness_profile_id when set, else the global default (System → Harness), else
+// nil (the built-in loop).
+func (s *Server) effectiveHarnessProfileID(t *Task) *int64 {
+	if t != nil && t.HarnessProfileID != nil {
+		return t.HarnessProfileID
+	}
+	if s.m == nil || s.m.pg == nil {
+		return nil
+	}
+	id, _ := s.m.pg.DefaultHarnessProfileID()
+	return id
+}
+
+// taskUsesHarness reports whether a task runs on a whole-task harness backend
+// (explicit or global default) rather than the built-in LLM loop.
+func (s *Server) taskUsesHarness(t *Task) bool {
+	return s.effectiveHarnessProfileID(t) != nil
+}
+
+func taskID64(t *Task) int64 {
 	id, _ := parseTaskID(t.ID)
 	return id
 }

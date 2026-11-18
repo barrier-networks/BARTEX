@@ -25,6 +25,42 @@ type harnessProfileInput struct {
 	MaxDurationSeconds   int               `json:"max_duration_seconds"`
 }
 
+// getHarnessDefault returns the global default execution-backend profile id
+// (null = built-in loop).
+func (s *Server) getHarnessDefault(w http.ResponseWriter, r *http.Request) {
+	if s.m == nil || s.m.pg == nil {
+		writeErr(w, 503, errDataSourceUnavailable)
+		return
+	}
+	id, err := s.m.pg.DefaultHarnessProfileID()
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"harness_profile_id": id})
+}
+
+// setHarnessDefault sets (or clears, with null) the global default execution
+// backend. New and existing tasks without an explicit backend then run on it.
+func (s *Server) setHarnessDefault(w http.ResponseWriter, r *http.Request) {
+	if s.m == nil || s.m.pg == nil {
+		writeErr(w, 503, errDataSourceUnavailable)
+		return
+	}
+	var body struct {
+		HarnessProfileID *int64 `json:"harness_profile_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, 400, "invalid JSON")
+		return
+	}
+	if err := s.m.pg.SetDefaultHarnessProfileID(body.HarnessProfileID); err != nil {
+		writeErr(w, 400, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "harness_profile_id": body.HarnessProfileID})
+}
+
 func (s *Server) listHarnessProfiles(w http.ResponseWriter, r *http.Request) {
 	if s.m == nil || s.m.pg == nil {
 		writeErr(w, 503, errDataSourceUnavailable)

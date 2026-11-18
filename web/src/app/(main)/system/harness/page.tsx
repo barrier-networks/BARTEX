@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -116,17 +116,34 @@ export default function HarnessPage() {
   const [editing, setEditing] = React.useState<HarnessProfile | null>(null);
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [saving, setSaving] = React.useState(false);
+  const [defaultId, setDefaultId] = React.useState<number | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      setProfiles(await api.harnessProfiles());
+      const [ps, def] = await Promise.all([
+        api.harnessProfiles(),
+        api.harnessDefault().catch(() => ({ harness_profile_id: null })),
+      ]);
+      setProfiles(ps);
+      setDefaultId(def.harness_profile_id ?? null);
     } catch (e) {
       toast.error(`Failed to load harness profiles: ${String(e)}`);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  async function changeDefault(value: string) {
+    const id = value === "" ? null : Number(value);
+    try {
+      await api.setHarnessDefault(id);
+      setDefaultId(id);
+      toast.success(id == null ? "Default backend set to built-in loop" : "Default execution backend updated");
+    } catch (e) {
+      toast.error(`Failed to set default: ${String(e)}`);
+    }
+  }
 
   React.useEffect(() => {
     void load();
@@ -205,9 +222,10 @@ export default function HarnessPage() {
             <TerminalSquareIcon className="size-5" /> Harness Backends
           </h1>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Run a task&apos;s workers on an external agentic CLI (Codex/Daybreak, Claude Code, …) instead of the
-            built-in loop. The CLI is pointed at the governed BARTEX Tools MCP server and confined by the OS sandbox,
-            with egress forced through the recording proxy. Attach a profile to a task from its detail page.
+            Run a task on an external agentic CLI (Codex/Daybreak, Claude Code, …) instead of the built-in LLM loop. In
+            whole-task mode the CLI plans and executes the whole engagement through the governed BARTEX Tools MCP
+            server, confined by the OS sandbox with egress forced through the recording proxy. Attach a profile per task
+            from its detail page, or set a default below.
           </p>
         </div>
         <div className="flex gap-2">
@@ -219,6 +237,30 @@ export default function HarnessPage() {
           </Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Default execution backend</CardTitle>
+          <CardDescription>
+            Applies to tasks with no explicit backend. Set a harness here to run every new task on the CLI with no LLM
+            provider configured; leave it on the built-in loop to require an LLM.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NativeSelect
+            className="max-w-sm"
+            value={defaultId == null ? "" : String(defaultId)}
+            onChange={(e) => void changeDefault(e.target.value)}
+          >
+            <NativeSelectOption value="">Built-in loop (requires an LLM)</NativeSelectOption>
+            {profiles.map((p) => (
+              <NativeSelectOption key={p.id} value={String(p.id)}>
+                {p.name} ({p.kind})
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

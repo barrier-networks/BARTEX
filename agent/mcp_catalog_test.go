@@ -93,3 +93,23 @@ func TestGuardedCatalogList(t *testing.T) {
 		t.Fatalf("defs = %+v", defs)
 	}
 }
+
+func TestHarnessLeadToolsCatalog(t *testing.T) {
+	ts := NewToolSet(nil, "mcp")
+	names := map[string]bool{}
+	for _, tool := range ts.HarnessLeadTools() {
+		names[tool.Name()] = true
+	}
+	// Must include both execution (worker) and planning tools.
+	for _, want := range []string{"insert_assets", "record_fact", "report_finding", "add_intent", "goal_met", "set_goals"} {
+		if !names[want] {
+			t.Errorf("HarnessLeadTools missing %q", want)
+		}
+	}
+	// Must NOT include the operator-only control tools.
+	for _, banned := range []string{"kill_work", "steer_work"} {
+		if names[banned] {
+			t.Errorf("HarnessLeadTools must not expose operator control tool %q", banned)
+		}
+	}
+}

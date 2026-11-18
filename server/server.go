@@ -177,6 +177,7 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		taskAgents:     map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1),
 		loginLimit: newLoginLimiter(time.Now), mcpTokens: newMCPTokenStore()}
 	s.engine.SetHarnessRunner(s.runHarnessIntent)
+	s.engine.SetHarnessTaskRunner(s.runHarnessTask, s.taskUsesHarness)
 	s.selfBaseURL = "http://127.0.0.1:8787"
 	s.llmHealth, s.llmHealthSync = newLLMHealthRegistry(ctx, m.pg)
 	for _, o := range opts {
@@ -752,6 +753,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/task-templates", s.pgCreateTaskTemplate)
 	mux.HandleFunc("PATCH /api/task-templates/{id}", s.pgUpdateTaskTemplate)
 	mux.HandleFunc("DELETE /api/task-templates/{id}", s.pgDeleteTaskTemplate)
+	mux.HandleFunc("GET /api/harness-default", s.getHarnessDefault)
+	mux.HandleFunc("PUT /api/harness-default", s.setHarnessDefault)
 	mux.HandleFunc("GET /api/harness-profiles", s.listHarnessProfiles)
 	mux.HandleFunc("POST /api/harness-profiles", s.createHarnessProfile)
 	mux.HandleFunc("PATCH /api/harness-profiles/{id}", s.updateHarnessProfile)
