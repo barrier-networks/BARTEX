@@ -109,12 +109,27 @@ it **must not** run without Option B's sandbox.
 
 ## 8. Phased plan
 
-- **Phase 0 — BARTEX Tools MCP server.** Substrate (this change): a
-  self-contained `mcpserver` package — a minimal, correct MCP Streamable-HTTP /
-  JSON-RPC server (`initialize`, `tools/list`, `tools/call`), bearer auth,
-  session management, and a **`GuardedToolset`** governance seam. Next: mount at
-  `/api/mcp`, bind a session to a task via a scoped token, and plug the live
-  guarded catalog (route each `tools/call` through `applyIntercept` + write-back).
+- **Phase 0 — BARTEX Tools MCP server. ✅ Mounted.** The substrate (the
+  self-contained `mcpserver` package — a minimal MCP Streamable-HTTP / JSON-RPC
+  server with `initialize` / `tools/list` / `tools/call`, bearer auth and the
+  `GuardedToolset` seam) is now wired live:
+  - **Guard seam:** `guard.Guard.CheckToolCall(ctx, name, input)` runs the same
+    `applyIntercept` pipeline a worker uses and returns the platform-control
+    block message as an error — one policy, two callers.
+  - **Governed catalog:** `agent.GuardedCatalog` adapts the task's curated
+    `WorkerTools()` to the MCP `Toolset`, running `CheckToolCall` before each
+    call and executing the identical `CoreTool` on a pass (so assets / facts /
+    findings write back exactly as for the built-in loop).
+  - **Endpoint + scope:** mounted at `/api/mcp`, outside the operator-JWT
+    wrapper, authenticating on a task-scoped bearer token. The binder attaches
+    the task's `targetScope(...)` to each call's context, so the target gate and
+    the RoE engagement policy enforce pins / approvals / the engagement window.
+  - **Tokens:** `POST /api/tasks/{id}/mcp-token` (operator-auth) mints a
+    SHA-256-stored, 12 h, task-scoped token; shown once, stored in the harness
+    profile's env.
+  - **Known Phase-0 limit:** only BARTEX's *domain* tools are governed here. A
+    harness's own native recon/exploit tools still bypass layer-1 and are caught
+    only by the network backstop — which is why Phase 1 is Option-B-mandatory.
 - **Phase 1 — Claude Code backend, MCP-restricted, behind the egress proxy.**
   One harness, minimal, sandboxed; prove governance parity end-to-end on a
   scoped target.
