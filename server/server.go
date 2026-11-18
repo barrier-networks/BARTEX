@@ -60,6 +60,8 @@ type Server struct {
 	// mcpTokens scopes bearer tokens for the governed BARTEX Tools MCP server
 	// (/api/harness-mcp): each token binds an external harness session to one task.
 	mcpTokens *mcpTokenStore
+	// codex drives Codex CLI authentication (System → Harness).
+	codex *codexAuth
 	// selfBaseURL is this server's own loopback base URL (e.g.
 	// http://127.0.0.1:8787), used to tell an external harness where the governed
 	// MCP endpoint is. Set by the binary from the bind address.
@@ -175,7 +177,7 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		profChatAgents: map[int64]*agent.ChatAgent{},
 		provByProfile:  map[int64]*provEntry{},
 		taskAgents:     map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1),
-		loginLimit: newLoginLimiter(time.Now), mcpTokens: newMCPTokenStore()}
+		loginLimit: newLoginLimiter(time.Now), mcpTokens: newMCPTokenStore(), codex: newCodexAuth()}
 	s.engine.SetHarnessRunner(s.runHarnessIntent)
 	s.engine.SetHarnessTaskRunner(s.runHarnessTask, s.taskUsesHarness)
 	s.selfBaseURL = "http://127.0.0.1:8787"
@@ -755,6 +757,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/task-templates/{id}", s.pgDeleteTaskTemplate)
 	mux.HandleFunc("GET /api/harness-default", s.getHarnessDefault)
 	mux.HandleFunc("PUT /api/harness-default", s.setHarnessDefault)
+	mux.HandleFunc("GET /api/harness/codex/status", s.codexAuthStatus)
+	mux.HandleFunc("POST /api/harness/codex/device-login", s.codexDeviceLogin)
+	mux.HandleFunc("POST /api/harness/codex/api-key", s.codexAPIKeyLogin)
+	mux.HandleFunc("POST /api/harness/codex/logout", s.codexLogout)
 	mux.HandleFunc("GET /api/harness-profiles", s.listHarnessProfiles)
 	mux.HandleFunc("POST /api/harness-profiles", s.createHarnessProfile)
 	mux.HandleFunc("PATCH /api/harness-profiles/{id}", s.updateHarnessProfile)

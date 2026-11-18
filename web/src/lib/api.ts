@@ -1398,4 +1398,15 @@ export const api = {
     put<{ ok: boolean; harness_profile_id: number | null }>("/harness-default", {
       harness_profile_id: harnessProfileId,
     }),
+  codexStatus: () =>
+    get<{
+      logged_in: boolean;
+      detail?: string;
+      pending?: { url: string; code: string; started_at: number };
+      last_error?: string;
+    }>("/harness/codex/status"),
+  codexDeviceLogin: () =>
+    post<{ url: string; code: string; expires_minutes: number }>("/harness/codex/device-login", {}),
+  codexApiKeyLogin: (apiKey: string) => post<{ ok: boolean }>("/harness/codex/api-key", { api_key: apiKey }),
+  codexLogout: () => post<{ ok: boolean }>("/harness/codex/logout", {}),
 };

@@ -63,7 +63,12 @@ services:
       # Mount skills/ from the project root into the container (overriding the image's built-in /app/skills);
       # skill changes require no image rebuild — the container reads the host copy.
       - ./skills:/app/skills
+      # Codex CLI auth (CODEX_HOME=/app/codex-home): persists the harness login
+      # (device-code or API key) across container rebuilds. Named volume (not a bind)
+      # so file ownership/permissions stay container-managed.
+      - codex-home:/app/codex-home
     restart: unless-stopped
 
 volumes:
   pgdata:
+  codex-home:
