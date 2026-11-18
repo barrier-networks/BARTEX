@@ -71,10 +71,12 @@ engineering audience picking the work up.
     brand colour (Deep on light, white when inverted on dark surfaces), per the
     "paint only" variants. (Downloading it needed `www.figma.com` on the
     environment allowlist, which the user approved.)
+- **Favicon** (`web/src/app/favicon.ico`) regenerated from the real AdversaryOps
+  mark (white on a Cobalt tile, multi-size 16/32/48).
 - **Note:** the client **report** still carries **Barrier Networks** company
-  branding (Cobalt + the earlier mark) rather than AdversaryOps red, on the view
-  that a client report is a consultancy deliverable; switch it to AdversaryOps or
-  the Barrier Networks master mark on request. `favicon.ico` not yet refreshed.
+  branding (Cobalt + the earlier mark) rather than the AdversaryOps offering, on
+  the view that a client report is a consultancy deliverable; switch it to the
+  AdversaryOps mark or the Barrier Networks master mark on request.
 
 ### 2.3 Skills ✅ (content) / 🟡 (image tooling)
 Three authorized-engagement playbooks added under `skills/`, validated by the
