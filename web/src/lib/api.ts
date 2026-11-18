@@ -1393,4 +1393,9 @@ export const api = {
   deleteHarnessProfile: (id: number) => del<{ ok: boolean }>(`/harness-profiles/${id}`),
   attachTaskHarness: (taskId: string, harnessProfileId: number | null) =>
     post<{ ok: boolean }>(`/tasks/${encodeURIComponent(taskId)}/harness`, { harness_profile_id: harnessProfileId }),
+  harnessDefault: () => get<{ harness_profile_id: number | null }>("/harness-default"),
+  setHarnessDefault: (harnessProfileId: number | null) =>
+    put<{ ok: boolean; harness_profile_id: number | null }>("/harness-default", {
+      harness_profile_id: harnessProfileId,
+    }),
 };

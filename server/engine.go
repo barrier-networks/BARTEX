@@ -160,6 +160,11 @@ type Engine struct {
 	// built-in worker. Wired by the server; nil (or a task with no harness profile)
 	// means the built-in loop runs, unchanged.
 	harnessRun func(ctx context.Context, t *Task, name string, intent *db.Node, emit func(db.Activity)) (harness.TerminalReason, agent.WriteCounts, error)
+	// harnessTask runs a whole engagement on the harness (the CLI plans + executes
+	// through the governed catalog), used instead of the planner/worker LLM loops
+	// when usesHarness(t) is true. Both are wired by the server.
+	harnessTask func(ctx context.Context, t *Task, name string, node int64, emit func(db.Activity)) (harness.TerminalReason, error)
+	usesHarness func(t *Task) bool
 	// readiness reports whether a global LLM provider is configured — the signal behind
 	// Ready()/the llm_configured indicator. Wired once at startup; nil → not ready.
 	readiness func() bool
@@ -792,6 +797,24 @@ func (e *Engine) SetHarnessRunner(fn func(ctx context.Context, t *Task, name str
 	e.harnessRun = fn
 }
 
+// SetHarnessTaskRunner wires whole-task harness mode: run executes a whole
+// engagement on the CLI, and uses reports whether a task's effective backend is
+// a harness (explicit or global default). When uses(t) is true the engine runs
+// the harness task loop instead of the planner/worker LLM loops, so the task runs
+// with no LLM provider configured.
+func (e *Engine) SetHarnessTaskRunner(
+	run func(ctx context.Context, t *Task, name string, node int64, emit func(db.Activity)) (harness.TerminalReason, error),
+	uses func(t *Task) bool,
+) {
+	e.harnessTask = run
+	e.usesHarness = uses
+}
+
+// taskOnHarness reports whether this task should run in whole-task harness mode.
+func (e *Engine) taskOnHarness(t *Task) bool {
+	return e.harnessTask != nil && e.usesHarness != nil && e.usesHarness(t)
+}
+
 func (e *Engine) SetAgentResolver(fn func(t *Task) (*agent.Planner, *agent.Worker)) {
 	e.resolve = fn
 	e.resolveAuthoritative = false
@@ -828,6 +851,9 @@ func (e *Engine) Ready() bool {
 // An explicit task profile chain can be runnable even when no global default
 // provider is configured, so task status must not rely on Ready alone.
 func (e *Engine) ReadyFor(t *Task) bool {
+	if e.taskOnHarness(t) {
+		return true // whole-task harness mode needs no LLM provider
+	}
 	p, w := e.snapshotFor(t)
 	return p != nil && w != nil
 }
@@ -854,11 +880,18 @@ func (e *Engine) Run(ctx context.Context, t *Task) {
 		return
 	}
 	e.touch(t.ID)
-	runTaskRoutine(rt, func(loopCtx context.Context) { e.plannerLoop(loopCtx, t) })
-	runTaskRoutine(rt, func(loopCtx context.Context) { e.claimSweepLoop(loopCtx, t) })
-	for i := 0; i < workers; i++ {
-		name := fmt.Sprintf("work#%d", i+1)
-		runTaskRoutine(rt, func(loopCtx context.Context) { e.workerLoop(loopCtx, t, name) })
+	if e.taskOnHarness(t) {
+		// Whole-task harness mode: the CLI plans and executes the engagement itself
+		// through the governed catalog. The planner/worker LLM loops are not started
+		// (they would need an LLM provider); one harness loop drives the task.
+		runTaskRoutine(rt, func(loopCtx context.Context) { e.harnessTaskLoop(loopCtx, t) })
+	} else {
+		runTaskRoutine(rt, func(loopCtx context.Context) { e.plannerLoop(loopCtx, t) })
+		runTaskRoutine(rt, func(loopCtx context.Context) { e.claimSweepLoop(loopCtx, t) })
+		for i := 0; i < workers; i++ {
+			name := fmt.Sprintf("work#%d", i+1)
+			runTaskRoutine(rt, func(loopCtx context.Context) { e.workerLoop(loopCtx, t, name) })
+		}
 	}
 	e.startDeadlineCoordinator(ctx, t) // task-level timeout timer (only when timeout>0; deduplicated)
 	// Kick the first planning round only when there are no active intents at all
@@ -868,6 +901,82 @@ func (e *Engine) Run(ctx context.Context, t *Task) {
 	// ⚠️ Do not use Frontier (counts only open): a worker claiming (open→running) races with this check and would kick spuriously. After a restart-driven auto-recovery only running intents may remain — skip then too.
 	if has, _ := t.Store.HasActiveIntent(); !has {
 		t.Notify() // kick the first planning round (acted on once LLM is ready)
+	}
+}
+
+// harnessTaskLoop drives a whole-task harness engagement. On each wake (a
+// trigger or the heartbeat) it runs one governed CLI session that plans and
+// executes the engagement; the session marks goals met through the MCP tools, so
+// when no open goal remains the task settles to done. It reuses the task-operation
+// admission, pause/delete guards and deadline coordinator of the LLM path, and
+// never calls the LLM.
+func (e *Engine) harnessTaskLoop(ctx context.Context, t *Task) {
+	hb := plannerHeartbeatInterval(t)
+	timer := time.NewTimer(hb)
+	defer timer.Stop()
+	emit := func(r db.Activity) { e.emitActivity(t, r) }
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.notify:
+		case <-timer.C:
+		}
+		resetPlannerTimer(timer, hb)
+
+		if e.IsPaused(t.ID) || e.IsDeleting(t.ID) {
+			continue
+		}
+		if isTerminalStatus(t.lifecycleSnapshot().Status) {
+			return
+		}
+		if e.isSettling(t.ID) {
+			continue
+		}
+		// Completion: the CLI marks goals met via goal_met, so an empty open-goal
+		// set means the engagement is finished.
+		if open, err := t.Store.HasOpenGoal(); err == nil && !open {
+			if won, serr := e.m.SetTaskStatusGuarded(t.ID, "done", ""); serr != nil {
+				log.Printf("[harness] task %s failed to settle into done: %v", t.ID, serr)
+			} else if won {
+				emit(db.Activity{Worker: "harness", Kind: "text", Summary: "All goals met — harness engagement complete"})
+			}
+			return
+		}
+
+		if !e.beginTaskOperation(t.ID) {
+			continue // a delete is in progress
+		}
+		e.stampFirstRun(t)
+		e.touch(t.ID)
+		node, _ := t.Store.OriginFactID()
+		ectx := e.clockCtx(e.execContextFor(ctx, t.ID), t, false)
+		if ectx.Err() != nil || e.IsDeleting(t.ID) {
+			e.decInflight(t.ID)
+			continue
+		}
+		e.BeginLLMCall(t.ID) // reuse the activity/engine-state signal (no LLM is actually called)
+		reason, err := e.harnessTask(ectx, t, "harness", node, emit)
+		e.EndLLMCall(t.ID)
+		e.decInflight(t.ID)
+		e.touch(t.ID)
+
+		switch {
+		case ectx.Err() != nil || e.IsPaused(t.ID) || e.IsDeleting(t.ID):
+			// cancelled by pause/delete/deadline: leave state as-is, wait for the next wake.
+			continue
+		case err != nil && reason == harness.ReasonModelError:
+			log.Printf("[harness] task %s session error: %v", t.ID, err)
+			// Do not spin: wait for the next heartbeat before retrying.
+			continue
+		default:
+			// Clean session end. If the CLI met the goals, the HasOpenGoal check at the
+			// top of the next iteration settles the task; otherwise the heartbeat runs
+			// another session to continue the engagement (no immediate re-notify, so a
+			// CLI that makes no progress cannot spin).
+			continue
+		}
 	}
 }
 

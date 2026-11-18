@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -141,6 +142,41 @@ func (d *DB) SaveHarnessProfile(p *HarnessProfile) (int64, error) {
 func (d *DB) DeleteHarnessProfile(id int64) error {
 	_, err := d.Exec(`DELETE FROM harness_profiles WHERE id=$1`, id)
 	return err
+}
+
+// defaultHarnessSettingKey holds the global default execution-backend profile id
+// ("" / absent = built-in loop). Read on task dispatch to resolve the effective
+// backend when a task has no explicit harness_profile_id.
+const defaultHarnessSettingKey = "default_harness_profile_id"
+
+// DefaultHarnessProfileID returns the global default execution-backend profile
+// id, or nil when none is set (built-in loop is the default).
+func (d *DB) DefaultHarnessProfileID() (*int64, error) {
+	v, ok, err := d.GetSetting(defaultHarnessSettingKey)
+	if err != nil || !ok || strings.TrimSpace(v) == "" {
+		return nil, err
+	}
+	id, perr := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+	if perr != nil {
+		return nil, nil // malformed → treat as unset rather than fail dispatch
+	}
+	return &id, nil
+}
+
+// SetDefaultHarnessProfileID sets (or, with nil, clears) the global default
+// execution backend. A non-nil id must reference an existing profile.
+func (d *DB) SetDefaultHarnessProfileID(id *int64) error {
+	if id == nil {
+		return d.SetSetting(defaultHarnessSettingKey, "")
+	}
+	p, err := d.HarnessProfileByID(*id)
+	if err != nil {
+		return err
+	}
+	if p == nil {
+		return fmt.Errorf("harness profile %d not found", *id)
+	}
+	return d.SetSetting(defaultHarnessSettingKey, fmt.Sprintf("%d", *id))
 }
 
 // sealEnvMap marshals an env map to canonical JSON and seals it for column c. A

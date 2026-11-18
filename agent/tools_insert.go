@@ -728,6 +728,30 @@ func (t *ToolSet) MainAgentTools() []actool.CoreTool {
 // deduped by name (mainagent order wins). Used by the server to build a registry
 // for injecting domain tools into agents (Auto, custom) that don't own a per-task
 // ToolSet. The caller provides real stores; tools are callable at taskID=0 scope.
+// HarnessLeadTools is the governed catalog exposed to an external harness that
+// drives a whole engagement (plan + execute + report), as opposed to a single
+// worker intent. It is the worker's executing set plus the planning tools the CLI
+// needs to shape and finish the engagement — set goals' done state, add intents,
+// read the graph — but NOT the human-control tools (kill_work / steer_work),
+// which are the operator's, not the model's. Deduped by name (worker set wins).
+func (t *ToolSet) HarnessLeadTools() []actool.CoreTool {
+	planning := []actool.CoreTool{
+		t.graphOverview(), t.listGoals(), t.addIntent(), t.proveGoal(), t.goalMet(),
+		t.listFacts(), t.nodeDetail(), t.expandDigest(), t.listAssets(),
+		t.addTaskScope(), t.listUntestedAssets(), t.setGoals(), t.setConstraints(),
+	}
+	seen := map[string]bool{}
+	var out []actool.CoreTool
+	for _, tool := range append(t.WorkerTools(), planning...) {
+		if tool == nil || seen[tool.Name()] {
+			continue
+		}
+		seen[tool.Name()] = true
+		out = append(out, tool)
+	}
+	return out
+}
+
 func (t *ToolSet) AllDomainTools() []actool.CoreTool {
 	seen := map[string]bool{}
 	var out []actool.CoreTool
